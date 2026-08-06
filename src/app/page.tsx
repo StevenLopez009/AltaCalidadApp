@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { Navbar } from "../components/layout/Navbar/Navbar";
-import { HeroBackground } from "../components/background/HeroBackground";
-import { ServicesSection } from "../components/sections/ServicesSection";
-import { PortfolioSection } from "../components/sections/PortafolioSection";
+import { Navbar } from "../shared/components/Navbar";
+import { HeroBackground } from "../modules/home/components/HeroBackground";
+import { ServicesSection } from "../modules/home/components/ServicesSection";
+import { PortfolioSection } from "../modules/home/components/PortafolioSection";
 import Link from "next/link";
 
 export default function Home() {

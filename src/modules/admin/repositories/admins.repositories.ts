@@ -1,5 +1,5 @@
-import { db } from "../lib/db";
-import { Admin } from "../types/admin";
+import { db } from "../../../shared/lib/db";
+import { Admin } from "../../../shared/types/admin";
 
 export async function getAdminByUsername(
   username: string,

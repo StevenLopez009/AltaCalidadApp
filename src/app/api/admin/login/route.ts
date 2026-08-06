@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { login } from "@/src/services/auth.service";
+import { login } from "@/src/modules/auth/services/auth.service";
 
 export async function POST(request: Request) {
   try {

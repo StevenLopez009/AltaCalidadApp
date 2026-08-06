@@ -1,6 +1,6 @@
-import { db } from "../lib/db";
-import { CreateServiceDto } from "../types/createServiceDto";
-import { Service } from "../types/service";
+import { db } from "@/src/shared/lib/db";
+import { CreateServiceDto } from "@/src/shared/types/createServiceDto";
+import { Service } from "@/src/shared/types/service";
 
 export async function getServicesByCategoryId(
   categoryId: number,

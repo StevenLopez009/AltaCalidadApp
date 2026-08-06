@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Service } from "@/src/types/service";
+import { Service } from "@/src/shared/types/service";
 import { QuoteForm } from "./QuoteForm";
 
 interface Props {

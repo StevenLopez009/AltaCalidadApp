@@ -1,5 +1,5 @@
-import { CategoryForm } from "@/src/components/admin/categories/CategoryForm";
-import { ServiceForm } from "@/src/components/admin/services/ServiceForm";
+import { CategoryForm } from "@/src/modules/admin/components/CategoryForm";
+import { ServiceForm } from "@/src/modules/services/components/ServiceForm";
 
 export default function AdminDashboard() {
   return (

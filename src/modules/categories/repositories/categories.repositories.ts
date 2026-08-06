@@ -1,6 +1,6 @@
-import { db } from "../lib/db";
-import { Category } from "../types/category";
-import { CreateCategoryDto } from "../types/createCategoryDto";
+import { db } from "@/src/shared/lib/db";
+import { Category } from "@/src/shared/types/category";
+import { CreateCategoryDto } from "@/src/shared/types/createCategoryDto";
 
 export async function getCategories(): Promise<Category[]> {
   const [rows] = await db.query<Category[]>(
