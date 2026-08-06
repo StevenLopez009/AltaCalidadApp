@@ -1,5 +1,5 @@
+import { createNewQuote } from "@/src/modules/quotes/services/quotes.service";
 import { NextRequest, NextResponse } from "next/server";
-import { createNewQuote } from "@/src/services/quotes.service";
 
 export async function POST(req: NextRequest) {
   try {

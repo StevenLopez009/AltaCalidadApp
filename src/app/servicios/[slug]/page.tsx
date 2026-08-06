@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { findCategoryBySlug } from "@/src/services/categories.service";
-import { listServicesByCategory } from "@/src/services/services.service";
+import { listServicesByCategory } from "@/src/modules/services/services/services.service";
 import Image from "next/image";
-import { ServicesGrid } from "@/src/components/services/ServicesGrid";
+import { ServicesGrid } from "@/src/modules/services/components/ServicesGrid";
+import { findCategoryBySlug } from "@/src/modules/categories/services/categories.service";
 
 export default async function CategoryPage({
   params,

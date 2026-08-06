@@ -1,5 +1,5 @@
-import { db } from "../lib/db";
-import { CreateQuoteDto } from "../types/CreateQuoteDto";
+import { db } from "@/src/shared/lib/db";
+import { CreateQuoteDto } from "@/src/shared/types/CreateQuoteDto";
 
 export async function createQuote(data: CreateQuoteDto) {
   const [result] = await db.query(
@@ -7,30 +7,32 @@ export async function createQuote(data: CreateQuoteDto) {
     INSERT INTO quotes
     (
       service_id,
+      code,
       customer_name,
       phone,
       email,
       city,
       address,
       quantity,
+      unit,
       unit_price,
       total,
-      installation,
       observations
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?)
     `,
     [
       data.serviceId,
+      data.code,
       data.customerName,
       data.phone,
       data.email,
       data.city,
       data.address,
       data.quantity,
+      data.unit,
       data.unitPrice,
       data.total,
-      data.installation,
       data.observations,
     ],
   );

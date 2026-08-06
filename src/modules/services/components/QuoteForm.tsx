@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Service } from "@/src/types/service";
+import { Service } from "@/src/shared/types/service";
 
 interface Props {
   service: Service;
@@ -10,14 +10,12 @@ interface Props {
 
 export function QuoteForm({ service, onClose }: Props) {
   const [quantity, setQuantity] = useState(1);
-  const [installation, setInstallation] = useState("no");
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [observations, setObservations] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const total = Number(service.price) * quantity;
@@ -41,7 +39,6 @@ export function QuoteForm({ service, onClose }: Props) {
           city,
           address,
           quantity,
-          installation: installation === "si",
           observations,
         }),
       });
@@ -61,7 +58,6 @@ export function QuoteForm({ service, onClose }: Props) {
       setAddress("");
       setObservations("");
       setQuantity(1);
-      setInstallation("no");
 
       onClose();
     } catch (error) {
@@ -112,6 +108,7 @@ export function QuoteForm({ service, onClose }: Props) {
 
           <input
             type="text"
+            required
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
@@ -126,6 +123,7 @@ export function QuoteForm({ service, onClose }: Props) {
 
           <input
             type="tel"
+            required
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
@@ -154,27 +152,25 @@ export function QuoteForm({ service, onClose }: Props) {
 
           <input
             type="text"
+            required
             value={city}
             onChange={(e) => setCity(e.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
           />
         </div>
+        <div>
+          <label className="text-sm font-semibold uppercase text-white/60">
+            Dirección de instalación
+          </label>
 
-        {/* Dirección */}
-        {installation === "si" && (
-          <div>
-            <label className="text-sm font-semibold uppercase text-white/60">
-              Dirección de instalación
-            </label>
-
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
-            />
-          </div>
-        )}
+          <input
+            type="text"
+            required
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
+          />
+        </div>
 
         {/* Observaciones */}
         <div>
@@ -184,6 +180,8 @@ export function QuoteForm({ service, onClose }: Props) {
 
           <textarea
             rows={4}
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
             placeholder="Describe tu proyecto..."
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
           />

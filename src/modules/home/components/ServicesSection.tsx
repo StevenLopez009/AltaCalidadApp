@@ -7,8 +7,8 @@ import {
   Camera,
 } from "lucide-react";
 
-import { listCategories } from "@/src/services/categories.service";
 import Link from "next/link";
+import { listCategories } from "../../categories/services/categories.service";
 
 const icons = [Palette, Printer, Megaphone, ShoppingBag, Globe, Camera];
 

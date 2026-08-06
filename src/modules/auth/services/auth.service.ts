@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-import { getAdminByUsername } from "../repositories/admins.repositories";
+import { getAdminByUsername } from "../../admin/repositories/admins.repositories";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
