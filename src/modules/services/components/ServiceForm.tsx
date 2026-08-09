@@ -8,9 +8,15 @@ interface Category {
   name: string;
 }
 
+interface Material {
+  id: number;
+  name: string;
+}
+
 export function ServiceForm() {
   const [categories, setCategories] = useState<Category[]>([]);
-
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialId, setMaterialId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -25,11 +31,37 @@ export function ServiceForm() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    if (!categoryId) {
+      setMaterials([]);
+      setMaterialId("");
+      return;
+    }
+
+    loadMaterials();
+  }, [categoryId]);
+
   async function loadCategories() {
     const response = await fetch("/api/categories");
     const data = await response.json();
 
     setCategories(data);
+  }
+
+  async function loadMaterials() {
+    try {
+      const response = await fetch(`/api/materials?categoryId=${categoryId}`);
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      const data = await response.json();
+
+      setMaterials(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,6 +102,7 @@ export function ServiceForm() {
         },
         body: JSON.stringify({
           category_id: Number(categoryId),
+          material_id: Number(materialId),
           name,
           description,
           unit,
@@ -154,20 +187,45 @@ export function ServiceForm() {
         />
       </div>
 
-      {/* Unidad */}
+      {/* Unidad de venta */}
 
       <div className="mt-5">
-        <label className="text-sm text-white/60">Unidad</label>
+        <label className="text-sm text-white/60">Unidad de venta</label>
 
         <select
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
+          required
         >
           <option value="m2">Metro cuadrado (m²)</option>
+          <option value="metro">Metro lineal (m)</option>
           <option value="unidad">Unidad</option>
-          <option value="area">Área</option>
+          <option value="rollo">Rollo</option>
+          <option value="hoja">Hoja</option>
+          <option value="kg">Kilogramo (Kg)</option>
+          <option value="litro">Litro (L)</option>
           <option value="minuto">Minuto</option>
+          <option value="hora">Hora</option>
+        </select>
+      </div>
+
+      <div className="mt-5">
+        <label className="text-sm text-white/60">Material</label>
+
+        <select
+          value={materialId}
+          onChange={(e) => setMaterialId(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
+          required
+        >
+          <option value="">Seleccione...</option>
+
+          {materials.map((material) => (
+            <option key={material.id} value={material.id}>
+              {material.name}
+            </option>
+          ))}
         </select>
       </div>
 
