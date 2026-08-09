@@ -1,7 +1,7 @@
 import {
   createNewCategory,
   listCategories,
-} from "@/src/services/categories.service";
+} from "@/src/modules/categories/services/categories.service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {

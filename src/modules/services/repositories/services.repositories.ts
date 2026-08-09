@@ -13,6 +13,7 @@ export async function getServicesByCategoryId(
       name,
       description,
       unit,
+      material_id,
       price,
       image,
       created_at
@@ -35,6 +36,7 @@ export async function getServiceById(id: number): Promise<Service | null> {
       name,
       description,
       unit,
+      material_id,
       price,
       image,
       created_at
@@ -53,17 +55,19 @@ export async function createService(data: CreateServiceDto) {
     `
       INSERT INTO services
       (
-        category_id,
-        name,
-        description,
-        unit,
-        price,
-        image
+          category_id,
+          material_id,
+          name,
+          description,
+          unit,
+          price,
+          image
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?,?, ?, ?, ?, ?)
     `,
     [
       data.category_id,
+      data.material_id,
       data.name,
       data.description,
       data.unit,
