@@ -1,9 +1,9 @@
-import Image from "next/image";
 import { Navbar } from "../shared/components/Navbar";
 import { HeroBackground } from "../modules/home/components/HeroBackground";
 import { ServicesSection } from "../modules/home/components/ServicesSection";
 import { PortfolioSection } from "../modules/home/components/PortafolioSection";
 import Link from "next/link";
+import { CarruselSection } from "../modules/home/components/CarruselSection";
 
 export default function Home() {
   return (
@@ -11,51 +11,7 @@ export default function Home() {
       <section className="relative min-h-screen overflow-hidden">
         <HeroBackground />
         <Navbar />
-        <div className="relative z-70 mx-auto flex min-h-screen max-w-7xl items-center px-8 pt-10">
-          <div className="flex-1">
-            <h1 className="mb-8 text-7xl font-black uppercase leading-[0.9] tracking-tight text-white">
-              IDEAS
-              <br />
-              QUE
-              <br />
-              <span className="text-black">CONECTAN</span>
-            </h1>
-
-            <p className="mb-10 max-w-lg text-2xl leading-8 text-white/80">
-              Convertimos tu marca en experiencias visuales con impresión
-              publicitaria de alto impacto. Creamos piezas únicas que comunican,
-              destacan y hacen crecer tu negocio.
-            </p>
-
-            <div className="flex gap-5">
-              <button className="rounded-xl bg-black px-8 py-4 font-semibold text-white transition hover:scale-105">
-                VER SERVICIOS
-              </button>
-
-              <button className="rounded-xl border border-white/20 px-8 py-4 backdrop-blur-md transition hover:bg-white hover:text-black">
-                VER PORTAFOLIO
-              </button>
-            </div>
-          </div>
-
-          <div className="relative flex h-screen flex-1 items-center justify-end">
-            <Image
-              src="/images/image2.png"
-              alt="Publicidad"
-              width={700}
-              height={700}
-              priority
-              className="
-                relative z-50
-                h-full
-                w-auto
-                max-w-xl
-                object-contain
-                drop-shadow-2xl
-              "
-            />
-          </div>
-        </div>
+        <CarruselSection />
       </section>
       <ServicesSection />
       <PortfolioSection />

@@ -9,6 +9,7 @@ import {
 
 import Link from "next/link";
 import { listCategories } from "../../categories/services/categories.service";
+import Image from "next/image";
 
 const icons = [Palette, Printer, Megaphone, ShoppingBag, Globe, Camera];
 
@@ -26,72 +27,29 @@ export async function ServicesSection() {
           </h2>
         </div>
 
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category, index) => {
-            const Icon = icons[index % icons.length];
+        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={`/servicios/${category.slug}`}
+              className="group relative overflow-hidden rounded-xl"
+            >
+              <Image
+                src={category.image}
+                alt={category.name}
+                width={600}
+                height={800}
+              />
 
-            return (
-              <article
-                key={category.id}
-                className="
-                group
-                relative
-                overflow-hidden
-                border border-white/10
-                bg-white/5
-                p-8
-                backdrop-blur-xl
-                transition-all duration-300
-                hover:-translate-y-2
-                hover:border-orange-500/40
-                "
-              >
-                <div className="absolute right-0 top-0 h-8 w-8 bg-black" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition duration-300 group-hover:from-black/90" />
 
-                <div
-                  className="
-                  flex h-16 w-16 items-center justify-center
-                  bg-gradient-to-br
-                  from-yellow-300
-                  via-orange-500
-                  to-red-600
-                  transition-transform duration-300
-                  group-hover:scale-110
-                  "
-                  style={{
-                    clipPath: "polygon(0 0,100% 0,100% 75%,75% 100%,0 100%)",
-                  }}
-                >
-                  <Icon size={30} className="text-white" strokeWidth={2.3} />
-                </div>
-
-                <h3 className="mt-8 text-2xl font-bold uppercase">
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <h3 className="text-2xl font-bold text-white">
                   {category.name}
                 </h3>
-
-                <p className="mt-4 leading-7 text-white/60">
-                  {category.description}
-                </p>
-
-                <Link
-                  href={`/servicios/${category.slug}`}
-                  className="
-                    mt-8
-                    inline-block
-                    text-sm
-                    font-semibold
-                    uppercase
-                    tracking-wider
-                    text-orange-400
-                    transition
-                    group-hover:text-orange-300
-                  "
-                >
-                  Ver más →
-                </Link>
-              </article>
-            );
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>
