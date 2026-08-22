@@ -2,6 +2,21 @@ import { db } from "@/src/shared/lib/db";
 import { CreateServiceDto } from "@/src/shared/types/createServiceDto";
 import { Service } from "@/src/shared/types/service";
 
+export async function getServices() {
+  const [rows] = await db.query(`
+    SELECT
+      id,
+      category_id,
+      name,
+      unit,
+      price
+    FROM services
+    ORDER BY name;
+  `);
+
+  return rows;
+}
+
 export async function getServicesByCategoryId(
   categoryId: number,
 ): Promise<Service[]> {
