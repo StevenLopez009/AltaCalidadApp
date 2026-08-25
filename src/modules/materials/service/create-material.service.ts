@@ -1,5 +1,9 @@
 import { CreateMaterialDto } from "@/src/shared/types/CreateMaterialDto";
-import { createMaterial } from "../repositories/materials.repositories";
+import {
+  createMaterial,
+  getAllMaterials,
+  getMaterialsByCategory,
+} from "../repositories/materials.repositories";
 
 export async function createNewMaterial(data: CreateMaterialDto) {
   if (!data.categoryId) {
@@ -23,4 +27,12 @@ export async function createNewMaterial(data: CreateMaterialDto) {
   }
 
   return await createMaterial(data);
+}
+
+export async function getMaterials() {
+  return await getAllMaterials();
+}
+
+export async function getMaterialsForCategory(categoryId: number) {
+  return await getMaterialsByCategory(categoryId);
 }

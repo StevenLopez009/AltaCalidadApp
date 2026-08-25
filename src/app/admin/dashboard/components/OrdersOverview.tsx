@@ -30,6 +30,9 @@ export default function OrdersOverview() {
   const [searchCompany, setSearchCompany] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "todos">(
+    "todos",
+  );
 
   useEffect(() => {
     async function getOrders() {
@@ -66,12 +69,16 @@ export default function OrdersOverview() {
       const orderDate = order.delivery_date.split("T")[0];
 
       const matchesStartDate = !startDate || orderDate >= startDate;
-
       const matchesEndDate = !endDate || orderDate <= endDate;
 
-      return matchesCompany && matchesStartDate && matchesEndDate;
+      const matchesStatus =
+        statusFilter === "todos" || order.status === statusFilter;
+
+      return (
+        matchesCompany && matchesStartDate && matchesEndDate && matchesStatus
+      );
     });
-  }, [orders, searchCompany, startDate, endDate]);
+  }, [orders, searchCompany, startDate, endDate, statusFilter]);
 
   const totalOrders = useMemo(() => {
     return filteredOrders
@@ -189,6 +196,35 @@ export default function OrdersOverview() {
             className="rounded-xl border border-purple-500/20 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
             title="Fecha hasta"
           />
+        </div>
+
+        <div>
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as OrderStatus | "todos")
+            }
+            className="
+      rounded-xl
+      border border-purple-500/20
+      bg-[#0B0914]
+      px-4
+      py-3
+      text-sm
+      text-white
+      outline-none
+      transition
+      focus:border-purple-500/50
+      [color-scheme:dark]
+    "
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_produccion">En producción</option>
+            <option value="terminado">Terminado</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
         </div>
 
         {/* TOTAL */}
