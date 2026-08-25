@@ -5,6 +5,7 @@ import ProductionQueue from "./components/ProductionQueue";
 import OrdersOverview from "./components/OrdersOverview";
 import PendingOrdersChart from "./components/PendingOrdersChart";
 import HeaderCarouselUpload from "./components/HeaderCarouselUpload";
+import InventoryStatus from "../../../modules/materials/components/InventoryStatus";
 
 export default function AdminDashboard() {
   return (
@@ -67,13 +68,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Inventario */}
-        <div className="col-span-4 row-span-2 flex items-center justify-center rounded-3xl border border-purple-500/20 bg-[#161325] p-6">
-          Inventario
-        </div>
-
-        {/* Ventas */}
-        <div className="col-span-4 row-span-2 flex items-center justify-center rounded-3xl border border-purple-500/20 bg-[#161325] p-6">
-          Ventas
+        <div className="col-span-8 row-span-2 min-h-0 overflow-hidden rounded-3xl border border-purple-500/20 bg-[#161325]">
+          <InventoryStatus />
         </div>
       </div>
     </div>

@@ -1,29 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { createNewMaterial } from "@/src/modules/materials/service/create-material.service";
-import { getMaterialsByCategory } from "@/src/modules/materials/repositories/materials.repositories";
+
+import {
+  getAllMaterials,
+  getMaterialsByCategory,
+} from "@/src/modules/materials/repositories/materials.repositories";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const categoryId = Number(searchParams.get("categoryId"));
+    const categoryIdParam = searchParams.get("categoryId");
 
-    if (!categoryId) {
-      return NextResponse.json(
-        {
-          message: "categoryId es obligatorio",
-        },
-        {
-          status: 400,
-        },
-      );
+    // Si viene categoryId, obtener materiales de esa categoría
+    if (categoryIdParam) {
+      const categoryId = Number(categoryIdParam);
+
+      if (!categoryId) {
+        return NextResponse.json(
+          {
+            message: "categoryId inválido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      const materials = await getMaterialsByCategory(categoryId);
+
+      return NextResponse.json(materials);
     }
 
-    const materials = await getMaterialsByCategory(categoryId);
+    // Si no viene categoryId, obtener todos
+    const materials = await getAllMaterials();
 
     return NextResponse.json(materials);
   } catch (error) {
-    console.error(error);
+    console.error("Error obteniendo materiales:", error);
 
     return NextResponse.json(
       {
@@ -51,7 +66,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error creando material:", error);
 
     return NextResponse.json(
       {
