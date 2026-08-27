@@ -9,20 +9,77 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
+
+    const customerType = formData.get("customerType");
     const companyId = formData.get("companyId");
+    const customerName = formData.get("customerName");
+    const customerPhone = formData.get("customerPhone");
     const deliveryDate = formData.get("deliveryDate");
     const itemsString = formData.get("items");
 
-    if (!companyId) {
+    // ========================================================
+    // VALIDAR TIPO DE CLIENTE
+    // ========================================================
+
+    if (customerType !== "empresa" && customerType !== "usuario") {
       return NextResponse.json(
         {
-          message: "El companyId es obligatorio",
+          message: "El tipo de cliente es obligatorio",
         },
         {
           status: 400,
         },
       );
     }
+
+    // ========================================================
+    // VALIDAR EMPRESA
+    // ========================================================
+
+    if (customerType === "empresa") {
+      if (!companyId) {
+        return NextResponse.json(
+          {
+            message: "La empresa es obligatoria",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+    }
+
+    // ========================================================
+    // VALIDAR USUARIO
+    // ========================================================
+
+    if (customerType === "usuario") {
+      if (!customerName || typeof customerName !== "string") {
+        return NextResponse.json(
+          {
+            message: "El nombre del cliente es obligatorio",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (!customerPhone || typeof customerPhone !== "string") {
+        return NextResponse.json(
+          {
+            message: "El teléfono del cliente es obligatorio",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+    }
+
+    // ========================================================
+    // VALIDAR FECHA
+    // ========================================================
 
     if (!deliveryDate) {
       return NextResponse.json(
@@ -34,6 +91,10 @@ export async function POST(request: Request) {
         },
       );
     }
+
+    // ========================================================
+    // VALIDAR ITEMS
+    // ========================================================
 
     if (!itemsString || typeof itemsString !== "string") {
       return NextResponse.json(
@@ -71,16 +132,26 @@ export async function POST(request: Request) {
         },
       );
     }
+
+    // ========================================================
+    // CREAR PEDIDO
+    // ========================================================
+
     const order = await createNewOrder({
-      companyId: Number(companyId),
+      customerType,
+      companyId: customerType === "empresa" ? Number(companyId) : null,
+
+      customerName:
+        customerType === "usuario" ? String(customerName).trim() : null,
+
+      customerPhone:
+        customerType === "usuario" ? String(customerPhone).trim() : null,
 
       deliveryDate: String(deliveryDate),
 
       items: items.map((item) => ({
         categoryId: Number(item.categoryId),
-
         serviceId: Number(item.serviceId),
-
         quantity: Number(item.quantity),
 
         width:
@@ -96,9 +167,7 @@ export async function POST(request: Request) {
             : null,
 
         unit: item.unit ?? null,
-
         designFile: item.designFile ?? null,
-
         observations: item.observations ?? null,
       })),
     });
