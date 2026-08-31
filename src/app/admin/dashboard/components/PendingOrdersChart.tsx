@@ -48,12 +48,6 @@ export default function PendingOrdersChart() {
     );
   }
 
-  /*
-   * ============================================================
-   * TOTALES
-   * ============================================================
-   */
-
   const totalOrders = orders.length;
 
   const pendingOrders = orders.filter(
@@ -64,12 +58,6 @@ export default function PendingOrdersChart() {
 
   const percentage =
     totalOrders > 0 ? Math.round((pendingOrders / totalOrders) * 100) : 0;
-
-  /*
-   * ============================================================
-   * DATOS DEL GRÁFICO
-   * ============================================================
-   */
 
   const data = [
     {

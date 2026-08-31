@@ -17,10 +17,6 @@ export async function POST(request: Request) {
     const deliveryDate = formData.get("deliveryDate");
     const itemsString = formData.get("items");
 
-    // ========================================================
-    // VALIDAR TIPO DE CLIENTE
-    // ========================================================
-
     if (customerType !== "empresa" && customerType !== "usuario") {
       return NextResponse.json(
         {
@@ -31,10 +27,6 @@ export async function POST(request: Request) {
         },
       );
     }
-
-    // ========================================================
-    // VALIDAR EMPRESA
-    // ========================================================
 
     if (customerType === "empresa") {
       if (!companyId) {
@@ -48,10 +40,6 @@ export async function POST(request: Request) {
         );
       }
     }
-
-    // ========================================================
-    // VALIDAR USUARIO
-    // ========================================================
 
     if (customerType === "usuario") {
       if (!customerName || typeof customerName !== "string") {
@@ -77,10 +65,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // ========================================================
-    // VALIDAR FECHA
-    // ========================================================
-
     if (!deliveryDate) {
       return NextResponse.json(
         {
@@ -91,10 +75,6 @@ export async function POST(request: Request) {
         },
       );
     }
-
-    // ========================================================
-    // VALIDAR ITEMS
-    // ========================================================
 
     if (!itemsString || typeof itemsString !== "string") {
       return NextResponse.json(
@@ -132,10 +112,6 @@ export async function POST(request: Request) {
         },
       );
     }
-
-    // ========================================================
-    // CREAR PEDIDO
-    // ========================================================
 
     const order = await createNewOrder({
       customerType,
