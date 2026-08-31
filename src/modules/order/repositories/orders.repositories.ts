@@ -1,11 +1,18 @@
 import { db } from "@/src/shared/lib/db";
 
+export type CustomerType = "empresa" | "usuario";
+
 export interface CreateOrderData {
-  companyId: number;
+  companyId: number | null;
+  customerType: CustomerType;
+  customerName: string | null;
+  customerPhone: string | null;
+
   deliveryDate: string;
   status: "pendiente";
   observations?: string | null;
   designFile?: string | null;
+
   subtotal: number;
   discountPercentage: number;
   discountAmount: number;
@@ -18,6 +25,9 @@ export async function createOrder(data: CreateOrderData) {
       INSERT INTO orders
       (
         company_id,
+        customer_type,
+        customer_name,
+        customer_phone,
         delivery_date,
         status,
         subtotal,
@@ -27,10 +37,13 @@ export async function createOrder(data: CreateOrderData) {
         design_file,
         observations
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       data.companyId,
+      data.customerType,
+      data.customerName,
+      data.customerPhone,
       data.deliveryDate,
       data.status,
       data.subtotal,
@@ -227,38 +240,39 @@ export async function getAllOrders() {
     SELECT
       o.id,
       o.company_id,
+      o.customer_type,
       c.name_company AS company_name,
+      o.customer_name,
+      o.customer_phone,
       o.delivery_date,
       o.status,
       o.payment_status,
+      o.amount_paid,
       o.total,
-
       GROUP_CONCAT(
         DISTINCT s.name
         ORDER BY s.name
         SEPARATOR ', '
       ) AS services
-
     FROM orders o
-
     LEFT JOIN company c
       ON c.id = o.company_id
-
     LEFT JOIN order_items oi
       ON oi.order_id = o.id
-
     LEFT JOIN services s
       ON s.id = oi.service_id
-
     GROUP BY
       o.id,
       o.company_id,
+      o.customer_type,
       c.name_company,
+      o.customer_name,
+      o.customer_phone,
       o.delivery_date,
       o.status,
       o.payment_status,
+      o.amount_paid,
       o.total
-
     ORDER BY o.delivery_date ASC
   `);
 

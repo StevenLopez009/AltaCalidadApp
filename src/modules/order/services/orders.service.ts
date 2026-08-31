@@ -23,20 +23,45 @@ interface CreateOrderItemData {
   observations: string | null;
 }
 
+type CustomerType = "empresa" | "usuario";
+
 interface CreateNewOrderData {
-  companyId: number;
+  customerType: CustomerType;
+  companyId?: number | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
   deliveryDate: string;
   items: CreateOrderItemData[];
 }
 
 export async function createNewOrder(data: CreateNewOrderData) {
-  const company = await getCompanyById(data.companyId);
+  let company = null;
+  let discountPercentage = 0;
 
-  if (!company) {
-    throw new Error("La empresa no existe");
+  if (data.customerType === "empresa") {
+    if (!data.companyId) {
+      throw new Error("Debes seleccionar una empresa");
+    }
+
+    company = await getCompanyById(data.companyId);
+
+    if (!company) {
+      throw new Error("La empresa no existe");
+    }
+
+    discountPercentage = Number(company.discount_percentage) || 0;
   }
 
-  const discountPercentage = Number(company.discount_percentage) || 0;
+  if (data.customerType === "usuario") {
+    if (!data.customerName?.trim()) {
+      throw new Error("El nombre del usuario es obligatorio");
+    }
+
+    if (!data.customerPhone?.trim()) {
+      throw new Error("El teléfono del usuario es obligatorio");
+    }
+    discountPercentage = 0;
+  }
   let subtotal = 0;
 
   for (const item of data.items) {
@@ -67,6 +92,7 @@ export async function createNewOrder(data: CreateNewOrderData) {
       if (width <= 0 || height <= 0) {
         throw new Error(`El servicio ${service.name} requiere base y altura`);
       }
+
       itemSubtotal = width * height * quantity * price;
     } else if (service.unit === "metro") {
       if (width <= 0) {
@@ -80,18 +106,29 @@ export async function createNewOrder(data: CreateNewOrderData) {
 
     subtotal += itemSubtotal;
   }
-
   const discountAmount = subtotal * (discountPercentage / 100);
   const total = subtotal - discountAmount;
 
   const order = await createOrder({
-    companyId: data.companyId,
+    companyId: data.customerType === "empresa" ? data.companyId! : null,
+
+    customerType: data.customerType,
+
+    customerName:
+      data.customerType === "usuario" ? data.customerName!.trim() : null,
+
+    customerPhone:
+      data.customerType === "usuario" ? data.customerPhone!.trim() : null,
+
     deliveryDate: data.deliveryDate,
+
     status: "pendiente",
+
     subtotal,
     discountPercentage,
     discountAmount,
     total,
+
     designFile: null,
     observations: null,
   });

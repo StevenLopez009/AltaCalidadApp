@@ -14,23 +14,33 @@ type PaymentStatus = "pendiente" | "pagado" | "pago_parcial";
 
 interface Order {
   id: number;
-  company_id: number;
-  company_name: string;
+  company_id: number | null;
+  customer_type: "empresa" | "usuario";
+  company_name: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
   delivery_date: string;
   status: OrderStatus;
   payment_status: PaymentStatus;
   total: number;
   services: string;
+  amount_paid: number;
 }
 
 export default function OrdersOverview() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [searchCompany, setSearchCompany] = useState("");
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "todos">(
+    "todos",
+  );
+
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "todos">(
     "todos",
   );
 
@@ -60,30 +70,45 @@ export default function OrdersOverview() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    const search = searchCompany.trim().toLowerCase();
+    const search = searchTerm.trim().toLowerCase();
 
     return orders.filter((order) => {
-      const matchesCompany =
-        !search || order.company_name?.toLowerCase().includes(search);
+      // Buscar empresa, cliente o teléfono
+      const matchesCustomer =
+        !search ||
+        order.company_name?.toLowerCase().includes(search) ||
+        order.customer_name?.toLowerCase().includes(search) ||
+        order.customer_phone?.toLowerCase().includes(search);
 
+      // Fechas
       const orderDate = order.delivery_date.split("T")[0];
 
       const matchesStartDate = !startDate || orderDate >= startDate;
+
       const matchesEndDate = !endDate || orderDate <= endDate;
 
+      // Estado del pedido
       const matchesStatus =
         statusFilter === "todos" || order.status === statusFilter;
 
+      // Estado del pago
+      const matchesPayment =
+        paymentFilter === "todos" || order.payment_status === paymentFilter;
+
       return (
-        matchesCompany && matchesStartDate && matchesEndDate && matchesStatus
+        matchesCustomer &&
+        matchesStartDate &&
+        matchesEndDate &&
+        matchesStatus &&
+        matchesPayment
       );
     });
-  }, [orders, searchCompany, startDate, endDate, statusFilter]);
+  }, [orders, searchTerm, startDate, endDate, statusFilter, paymentFilter]);
 
   const totalOrders = useMemo(() => {
     return filteredOrders
       .filter((order) => order.status !== "cancelado")
-      .reduce((total, order) => total + Number(order.total), 0);
+      .reduce((total, order) => total + Number(order.total ?? 0), 0);
   }, [filteredOrders]);
 
   const formatDate = (date: string) => {
@@ -147,7 +172,7 @@ export default function OrdersOverview() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       {/* HEADER */}
       <div className="mb-5 flex items-center justify-between">
         <div>
@@ -166,76 +191,106 @@ export default function OrdersOverview() {
         </Link>
       </div>
 
-      {/* FILTROS */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex-1">
+      {/* FILTROS + TOTAL */}
+      <div className="mb-4 flex items-end gap-3">
+        {/* BUSCADOR */}
+        <div className="min-w-0 flex-1">
+          <label className="mb-1.5 block text-xs font-medium text-gray-500">
+            Cliente o empresa
+          </label>
+
           <input
             type="text"
-            value={searchCompany}
-            onChange={(e) => setSearchCompany(e.target.value)}
-            placeholder="Buscar empresa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar cliente o empresa..."
             className="w-full rounded-xl border border-purple-500/20 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 transition focus:border-purple-500/50"
           />
         </div>
 
-        <div>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-xl border border-purple-500/20 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
-            title="Fecha desde"
-          />
+        {/* FECHAS */}
+        <div className="w-[150px] shrink-0">
+          <label className="mb-1.5 block text-xs font-medium text-gray-500">
+            Fecha de entrega
+          </label>
+
+          <div className="flex flex-col gap-1.5">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-xs text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
+              title="Fecha desde"
+            />
+
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-xs text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
+              title="Fecha hasta"
+            />
+          </div>
         </div>
 
-        <div>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-xl border border-purple-500/20 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
-            title="Fecha hasta"
-          />
+        {/* ESTADOS */}
+        <div className="w-[165px] shrink-0">
+          <label className="mb-1.5 block text-xs font-medium text-gray-500">
+            Estados
+          </label>
+
+          <div className="flex flex-col gap-1.5">
+            {/* ESTADO DEL PEDIDO */}
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as OrderStatus | "todos")
+              }
+              className="w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-xs text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
+              title="Estado del pedido"
+            >
+              <option value="todos">Todos los pedidos</option>
+
+              <option value="pendiente">Pendiente</option>
+
+              <option value="en_produccion">En producción</option>
+
+              <option value="terminado">Terminado</option>
+
+              <option value="entregado">Entregado</option>
+
+              <option value="cancelado">Cancelado</option>
+            </select>
+
+            {/* ESTADO DEL PAGO */}
+            <select
+              value={paymentFilter}
+              onChange={(e) =>
+                setPaymentFilter(e.target.value as PaymentStatus | "todos")
+              }
+              className="w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-xs text-white outline-none transition focus:border-purple-500/50 [color-scheme:dark]"
+              title="Estado de pago"
+            >
+              <option value="todos">Todos los pagos</option>
+
+              <option value="pendiente">Pago pendiente</option>
+
+              <option value="pago_parcial">Pago parcial</option>
+
+              <option value="pagado">Pagado</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as OrderStatus | "todos")
-            }
-            className="
-      rounded-xl
-      border border-purple-500/20
-      bg-[#0B0914]
-      px-4
-      py-3
-      text-sm
-      text-white
-      outline-none
-      transition
-      focus:border-purple-500/50
-      [color-scheme:dark]
-    "
-          >
-            <option value="todos">Todos los estados</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="en_produccion">En producción</option>
-            <option value="terminado">Terminado</option>
-            <option value="entregado">Entregado</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        {/* TOTAL */}
-        <div className="min-w-[210px] rounded-xl border border-purple-500/20 bg-[#161325] px-5 py-3">
-          <p className="text-xs text-gray-500">Total</p>
+        {/* TOTAL FILTRADO */}
+        <div className="w-[210px] shrink-0 rounded-xl border border-purple-500/20 bg-[#161325] px-5 py-3">
+          <p className="text-xs text-gray-500">Total filtrado</p>
 
           <p className="mt-1 text-lg font-bold text-purple-400">
             ${totalOrders.toLocaleString("es-CO")}
           </p>
 
-          <p className="text-[10px] text-gray-600">Sin cancelados</p>
+          <p className="text-[10px] text-gray-600">Sin pedidos cancelados</p>
         </div>
       </div>
 
@@ -250,8 +305,12 @@ export default function OrdersOverview() {
       {!loading && filteredOrders.length === 0 && (
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-gray-500">
-            {searchCompany
-              ? "No se encontraron pedidos para esa empresa."
+            {searchTerm ||
+            startDate ||
+            endDate ||
+            statusFilter !== "todos" ||
+            paymentFilter !== "todos"
+              ? "No se encontraron pedidos con los filtros seleccionados."
               : "No hay pedidos registrados."}
           </p>
         </div>
@@ -261,8 +320,7 @@ export default function OrdersOverview() {
       {!loading && filteredOrders.length > 0 && (
         <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-purple-500/10">
           <div className="h-full overflow-auto">
-            <table className="w-full min-w-[950px] text-left">
-              {/* HEADER */}
+            <table className="w-full min-w-[1150px] text-left">
               <thead className="sticky top-0 z-10 bg-[#0B0914]">
                 <tr className="border-b border-purple-500/10">
                   <th className="px-4 py-3 text-xs font-medium text-gray-500">
@@ -270,7 +328,7 @@ export default function OrdersOverview() {
                   </th>
 
                   <th className="px-4 py-3 text-xs font-medium text-gray-500">
-                    Empresa
+                    Cliente
                   </th>
 
                   <th className="px-4 py-3 text-xs font-medium text-gray-500">
@@ -290,84 +348,131 @@ export default function OrdersOverview() {
                   </th>
 
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">
+                    Abonado
+                  </th>
+
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">
+                    Debe
+                  </th>
+
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">
                     Total
                   </th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="border-b border-purple-500/10 transition hover:bg-purple-500/5"
-                  >
-                    {/* PEDIDO */}
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="text-sm font-semibold text-white transition hover:text-purple-400"
-                      >
-                        #{order.id}
-                      </Link>
-                    </td>
+                {filteredOrders.map((order) => {
+                  const total = Number(order.total ?? 0);
+                  const amountPaid = Number(order.amount_paid ?? 0);
 
-                    {/* EMPRESA */}
-                    <td className="max-w-[180px] px-4 py-3">
-                      <p
-                        className="truncate text-sm text-gray-300"
-                        title={order.company_name}
-                      >
-                        {order.company_name || "Sin empresa"}
-                      </p>
-                    </td>
+                  const remaining = Math.max(total - amountPaid, 0);
 
-                    {/* SERVICIOS */}
-                    <td className="max-w-[260px] px-4 py-3">
-                      <p
-                        className="truncate text-sm text-gray-300"
-                        title={order.services}
-                      >
-                        {order.services || "Sin servicios"}
-                      </p>
-                    </td>
+                  return (
+                    <tr
+                      key={order.id}
+                      className="border-b border-purple-500/10 transition hover:bg-purple-500/5"
+                    >
+                      {/* PEDIDO */}
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="text-sm font-semibold text-white transition hover:text-purple-400"
+                        >
+                          #{order.id}
+                        </Link>
+                      </td>
 
-                    {/* ENTREGA */}
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <p className="text-sm text-gray-300">
-                        {formatDate(order.delivery_date)}
-                      </p>
-                    </td>
+                      {/* CLIENTE */}
+                      <td className="max-w-[220px] px-4 py-3">
+                        <div>
+                          <p
+                            className="truncate text-sm text-gray-300"
+                            title={
+                              order.customer_type === "empresa"
+                                ? (order.company_name ?? "")
+                                : (order.customer_name ?? "")
+                            }
+                          >
+                            {order.customer_type === "empresa"
+                              ? order.company_name || "Sin empresa"
+                              : order.customer_name || "Sin cliente"}
+                          </p>
 
-                    {/* ESTADO */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${getStatusStyle(
-                          order.status,
-                        )}`}
-                      >
-                        {getStatusLabel(order.status)}
-                      </span>
-                    </td>
+                          <p className="mt-0.5 text-[10px] text-gray-600">
+                            {order.customer_type === "empresa"
+                              ? "Empresa"
+                              : order.customer_phone || "Usuario"}
+                          </p>
+                        </div>
+                      </td>
 
-                    {/* PAGO */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${getPaymentStyle(
-                          order.payment_status,
-                        )}`}
-                      >
-                        {getPaymentLabel(order.payment_status)}
-                      </span>
-                    </td>
+                      {/* SERVICIOS */}
+                      <td className="max-w-[260px] px-4 py-3">
+                        <p
+                          className="truncate text-sm text-gray-300"
+                          title={order.services}
+                        >
+                          {order.services || "Sin servicios"}
+                        </p>
+                      </td>
 
-                    {/* TOTAL */}
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <p className="text-sm font-semibold text-purple-400">
-                        ${Number(order.total).toLocaleString("es-CO")}
-                      </p>
-                    </td>
-                  </tr>
-                ))}
+                      {/* ENTREGA */}
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <p className="text-sm text-gray-300">
+                          {formatDate(order.delivery_date)}
+                        </p>
+                      </td>
+
+                      {/* ESTADO */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${getStatusStyle(
+                            order.status,
+                          )}`}
+                        >
+                          {getStatusLabel(order.status)}
+                        </span>
+                      </td>
+
+                      {/* PAGO */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${getPaymentStyle(
+                            order.payment_status,
+                          )}`}
+                        >
+                          {getPaymentLabel(order.payment_status)}
+                        </span>
+                      </td>
+
+                      {/* ABONADO */}
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <p className="text-sm font-semibold text-green-400">
+                          ${amountPaid.toLocaleString("es-CO")}
+                        </p>
+                      </td>
+
+                      {/* DEBE */}
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <p
+                          className={`text-sm font-semibold ${
+                            remaining > 0 ? "text-red-400" : "text-green-400"
+                          }`}
+                        >
+                          ${remaining.toLocaleString("es-CO")}
+                        </p>
+                      </td>
+
+                      {/* TOTAL */}
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <p className="text-sm font-semibold text-purple-400">
+                          ${total.toLocaleString("es-CO")}
+                        </p>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

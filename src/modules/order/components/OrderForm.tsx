@@ -50,49 +50,19 @@ interface OrderItemForm {
 type CustomerType = "empresa" | "usuario";
 
 export default function OrderForm() {
-  // ============================================================
-  // DATOS
-  // ============================================================
-
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-
-  // ============================================================
-  // CLIENTE
-  // ============================================================
-
   const [customerType, setCustomerType] = useState<CustomerType>("empresa");
-
   const [companyId, setCompanyId] = useState("");
-
   const [customerName, setCustomerName] = useState("");
-
   const [customerPhone, setCustomerPhone] = useState("");
-
   const [deliveryDate, setDeliveryDate] = useState("");
-
-  // ============================================================
-  // CATÁLOGO
-  // ============================================================
-
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-
   const [search, setSearch] = useState("");
-
-  // ============================================================
-  // CARRITO
-  // ============================================================
-
   const [items, setItems] = useState<OrderItemForm[]>([]);
-
   const [configuringIndex, setConfiguringIndex] = useState<number | null>(null);
-
   const [submitting, setSubmitting] = useState(false);
-
-  // ============================================================
-  // CARGAR DATOS
-  // ============================================================
 
   useEffect(() => {
     async function loadData() {
@@ -135,34 +105,18 @@ export default function OrderForm() {
     loadData();
   }, []);
 
-  // ============================================================
-  // EMPRESA SELECCIONADA
-  // ============================================================
-
   const selectedCompany = companies.find(
     (company) => company.id === Number(companyId),
   );
-
-  // ============================================================
-  // DESCUENTO
-  // ============================================================
 
   const discountPercentage =
     customerType === "empresa"
       ? Number(selectedCompany?.discount_percentage) || 0
       : 0;
 
-  // ============================================================
-  // SERVICIO DE UN ITEM
-  // ============================================================
-
   function getSelectedService(item: OrderItemForm) {
     return services.find((service) => service.id === Number(item.serviceId));
   }
-
-  // ============================================================
-  // AGREGAR SERVICIO
-  // ============================================================
 
   function addItem(service: Service) {
     const existingIndex = items.findIndex(
@@ -187,10 +141,6 @@ export default function OrderForm() {
       },
     ]);
   }
-
-  // ============================================================
-  // ACTUALIZAR ITEM
-  // ============================================================
 
   function updateItem(
     index: number,

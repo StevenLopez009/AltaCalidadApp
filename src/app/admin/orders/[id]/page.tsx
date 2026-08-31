@@ -39,12 +39,13 @@ interface Order {
 
 export default function OrderDetailsPage() {
   const params = useParams();
+
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState(false);
+  const [updatingAmountPaid, setUpdatingAmountPaid] = useState(false);
+
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [amountPaid, setAmountPaid] = useState("");
-  const [updatingAmountPaid, setUpdatingAmountPaid] = useState(false);
 
   const orderStatuses = [
     {
@@ -69,21 +70,25 @@ export default function OrderDetailsPage() {
     },
   ] as const;
 
-  const paymentStatuses = [
-    {
-      value: "pendiente",
-      label: "Pendiente",
-    },
-    {
-      value: "pago_parcial",
-      label: "Pago parcial",
-    },
-    {
-      value: "pagado",
-      label: "Pagado",
-    },
-  ] as const;
+  /**
+   * Determina automáticamente el estado del pago
+   * según el total y el abono.
+   */
+  const getPaymentStatus = (paid: number, total: number): PaymentStatus => {
+    if (paid <= 0) {
+      return "pendiente";
+    }
 
+    if (paid >= total) {
+      return "pagado";
+    }
+
+    return "pago_parcial";
+  };
+
+  /**
+   * Actualizar estado del pedido
+   */
   async function handleStatusChange(
     event: React.ChangeEvent<HTMLSelectElement>,
   ) {
@@ -104,8 +109,10 @@ export default function OrderDetailsPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("No se pudo actualizar el estado");
+        throw new Error(data.message || "No se pudo actualizar el estado");
       }
 
       setOrder({
@@ -114,45 +121,14 @@ export default function OrderDetailsPage() {
       });
     } catch (error) {
       console.error(error);
-      alert("No se pudo actualizar el estado del pedido");
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo actualizar el estado del pedido",
+      );
     } finally {
       setUpdatingStatus(false);
-    }
-  }
-
-  async function handlePaymentStatusChange(
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) {
-    if (!order) return;
-
-    const newPaymentStatus = event.target.value as PaymentStatus;
-
-    try {
-      setUpdatingPaymentStatus(true);
-
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          payment_status: newPaymentStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo actualizar el estado de pago");
-      }
-
-      setOrder({
-        ...order,
-        paymentStatus: newPaymentStatus,
-      });
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo actualizar el estado de pago");
-    } finally {
-      setUpdatingPaymentStatus(false);
     }
   }
 
@@ -160,21 +136,22 @@ export default function OrderDetailsPage() {
     if (!order) return;
 
     const paid = Number(amountPaid);
-    const total = Number(order.total);
+    const total = Number(order.total) || 0;
 
-    // ========================================================
-    // VALIDAR ABONO
-    // ========================================================
-
+    // Validar número
     if (!Number.isFinite(paid) || paid < 0) {
       alert("Ingrese un valor de abono válido.");
       return;
     }
 
+    // Evitar abonos mayores al total
     if (paid > total) {
       alert("El abono no puede ser mayor al total del pedido.");
       return;
     }
+
+    // Calcular estado automáticamente
+    const newPaymentStatus = getPaymentStatus(paid, total);
 
     try {
       setUpdatingAmountPaid(true);
@@ -186,6 +163,7 @@ export default function OrderDetailsPage() {
         },
         body: JSON.stringify({
           amount_paid: paid,
+          payment_status: newPaymentStatus,
         }),
       });
 
@@ -195,18 +173,18 @@ export default function OrderDetailsPage() {
         throw new Error(data.message || "No se pudo actualizar el abono");
       }
 
-      // ======================================================
-      // DATOS ACTUALIZADOS
-      // ======================================================
+      /**
+       * Tomamos los datos devueltos por el backend.
+       * Si el backend devuelve camelCase los usamos.
+       */
+      const updatedAmountPaid = Number(data.order?.amountPaid ?? paid) || 0;
 
-      const updatedAmountPaid = Number(data.order.amountPaid) || 0;
+      const updatedPaymentStatus = (data.order?.paymentStatus ??
+        newPaymentStatus) as PaymentStatus;
 
-      const updatedPaymentStatus = data.order.paymentStatus as PaymentStatus;
-
-      // ======================================================
-      // ACTUALIZAR UI
-      // ======================================================
-
+      /**
+       * Actualizar UI inmediatamente
+       */
       setOrder((currentOrder) => {
         if (!currentOrder) return currentOrder;
 
@@ -217,7 +195,6 @@ export default function OrderDetailsPage() {
         };
       });
 
-      // Actualizar input
       setAmountPaid("");
     } catch (error) {
       console.error(error);
@@ -232,6 +209,9 @@ export default function OrderDetailsPage() {
     }
   }
 
+  /**
+   * Obtener pedido
+   */
   useEffect(() => {
     async function getOrder() {
       try {
@@ -242,7 +222,9 @@ export default function OrderDetailsPage() {
         }
 
         const data = await response.json();
+
         setOrder(data.order);
+
         setAmountPaid(String(Number(data.order.amountPaid) || 0));
       } catch (error) {
         console.error(error);
@@ -279,6 +261,11 @@ export default function OrderDetailsPage() {
       year: "numeric",
     });
   };
+
+  const total = Number(order.total) || 0;
+  const paid = Number(order.amountPaid) || 0;
+  const pending = Math.max(total - paid, 0);
+  const calculatedPaymentStatus = getPaymentStatus(paid, total);
 
   return (
     <div className="min-h-screen bg-[#0B0914] p-8 text-white">
@@ -336,22 +323,23 @@ export default function OrderDetailsPage() {
           <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
             <p className="text-xs text-gray-500">Estado de pago</p>
 
-            <select
-              value={order.paymentStatus}
-              onChange={handlePaymentStatusChange}
-              disabled={updatingPaymentStatus}
-              className="mt-2 w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-sm text-white outline-none transition focus:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {paymentStatuses.map((payment) => (
-                <option key={payment.value} value={payment.value}>
-                  {payment.label}
-                </option>
-              ))}
-            </select>
-
-            {updatingPaymentStatus && (
-              <p className="mt-2 text-xs text-gray-500">Actualizando pago...</p>
-            )}
+            <div className="mt-2">
+              <span
+                className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                  calculatedPaymentStatus === "pagado"
+                    ? "bg-green-500/10 text-green-400"
+                    : calculatedPaymentStatus === "pago_parcial"
+                      ? "bg-yellow-500/10 text-yellow-400"
+                      : "bg-red-500/10 text-red-400"
+                }`}
+              >
+                {calculatedPaymentStatus === "pagado"
+                  ? "Pagado"
+                  : calculatedPaymentStatus === "pago_parcial"
+                    ? "Pago parcial"
+                    : "Pendiente"}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -386,10 +374,7 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        {/* ========================================================= */}
         {/* TOTALES Y PAGOS */}
-        {/* ========================================================= */}
-
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* TOTALES */}
           <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
@@ -411,32 +396,42 @@ export default function OrderDetailsPage() {
                 {Number(order.discountAmount).toLocaleString("es-CO")}
               </span>
             </div>
+
+            {/* ABONO */}
             <div className="mt-4 border-t border-purple-500/10 pt-4">
-              {/* ACUMULADO ABONADO */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Total abonado</span>
 
                 <span className="text-lg font-semibold text-green-400">
-                  ${Number(order.amountPaid || 0).toLocaleString("es-CO")}
+                  ${paid.toLocaleString("es-CO")}
                 </span>
               </div>
             </div>
 
+            {/* SALDO */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Saldo pendiente</span>
+
+                <span className="text-lg font-semibold text-yellow-400">
+                  ${pending.toLocaleString("es-CO")}
+                </span>
+              </div>
+            </div>
+
+            {/* TOTAL */}
             <div className="mt-4 border-t border-purple-500/10 pt-4">
               <div className="flex justify-between">
                 <span className="font-semibold">Total</span>
 
                 <span className="text-xl font-bold text-purple-400">
-                  ${Number(order.total).toLocaleString("es-CO")}
+                  ${total.toLocaleString("es-CO")}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* ===================================================== */}
           {/* PAGOS */}
-          {/* ===================================================== */}
-
           <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
             <h2 className="mb-5 text-xl font-semibold">Información de pago</h2>
 
@@ -444,20 +439,20 @@ export default function OrderDetailsPage() {
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total del pedido</span>
 
-              <span>${Number(order.total).toLocaleString("es-CO")}</span>
+              <span>${total.toLocaleString("es-CO")}</span>
             </div>
 
             {/* ABONO */}
             <div className="mt-4">
               <label className="mb-2 block text-sm text-gray-500">
-                Abono realizado
+                Registrar abono
               </label>
 
               <div className="flex gap-2">
                 <input
                   type="number"
                   min="0"
-                  max={Number(order.total)}
+                  max={total}
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(e.target.value)}
                   disabled={updatingAmountPaid}
@@ -474,45 +469,51 @@ export default function OrderDetailsPage() {
                   {updatingAmountPaid ? "Guardando..." : "Guardar"}
                 </button>
               </div>
+
+              <p className="mt-2 text-[10px] text-gray-600">
+                El estado del pago se calcula automáticamente.
+              </p>
+            </div>
+
+            {/* ABONADO */}
+            <div className="mt-5 border-t border-purple-500/10 pt-4">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">Total abonado</span>
+
+                <span className="text-lg font-semibold text-green-400">
+                  ${paid.toLocaleString("es-CO")}
+                </span>
+              </div>
             </div>
 
             {/* SALDO */}
-            <div className="mt-5 border-t border-purple-500/10 pt-4">
+            <div className="mt-4">
               <div className="flex justify-between">
                 <span className="font-semibold">Saldo pendiente</span>
 
                 <span className="text-xl font-bold text-yellow-400">
-                  {(() => {
-                    const total = Number(order.total) || 0;
-                    const paid = Number(order.amountPaid) || 0;
-                    const due = Math.max(total - paid, 0);
-
-                    return `$${due.toLocaleString("es-CO")}`;
-                  })()}
+                  ${pending.toLocaleString("es-CO")}
                 </span>
               </div>
             </div>
 
             {/* ESTADO */}
-            <div className="mt-4">
+            <div className="mt-5 border-t border-purple-500/10 pt-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Estado de pago</span>
 
                 <span
-                  className={`
-            rounded-full px-3 py-1 text-xs font-medium
-            ${
-              order.paymentStatus === "pagado"
-                ? "bg-green-500/10 text-green-400"
-                : order.paymentStatus === "pago_parcial"
-                  ? "bg-yellow-500/10 text-yellow-400"
-                  : "bg-red-500/10 text-red-400"
-            }
-            `}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    calculatedPaymentStatus === "pagado"
+                      ? "bg-green-500/10 text-green-400"
+                      : calculatedPaymentStatus === "pago_parcial"
+                        ? "bg-yellow-500/10 text-yellow-400"
+                        : "bg-red-500/10 text-red-400"
+                  }`}
                 >
-                  {order.paymentStatus === "pagado"
+                  {calculatedPaymentStatus === "pagado"
                     ? "Pagado"
-                    : order.paymentStatus === "pago_parcial"
+                    : calculatedPaymentStatus === "pago_parcial"
                       ? "Pago parcial"
                       : "Pendiente"}
                 </span>
