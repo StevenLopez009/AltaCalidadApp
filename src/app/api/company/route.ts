@@ -2,6 +2,7 @@ import {
   createNewCompany,
   listCompanies,
 } from "@/src/modules/company/services/company.service";
+
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -23,8 +24,19 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Validación básica
+    if (!body.nameCompany || !body.telefono) {
+      return NextResponse.json(
+        {
+          message: "El nombre de la empresa y el teléfono son obligatorios",
+        },
+        { status: 400 },
+      );
+    }
+
     const company = await createNewCompany({
       nameCompany: body.nameCompany,
+      telefono: body.telefono,
       discountPercentage: Number(body.discountPercentage),
     });
 

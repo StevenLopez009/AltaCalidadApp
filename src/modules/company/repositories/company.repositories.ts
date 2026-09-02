@@ -8,6 +8,7 @@ export async function getCompanies(): Promise<Company[]> {
       SELECT
         id,
         name_company,
+        telefono,
         discount_percentage,
         created_at,
         updated_at
@@ -22,15 +23,16 @@ export async function getCompanies(): Promise<Company[]> {
 export async function getCompanyById(id: number) {
   const [rows] = await db.query(
     `
-    SELECT
-      id,
-      name_company,
-      discount_percentage,
-      created_at,
-      updated_at
-    FROM company
-    WHERE id = ?
-    LIMIT 1;
+      SELECT
+        id,
+        name_company,
+        telefono,
+        discount_percentage,
+        created_at,
+        updated_at
+      FROM company
+      WHERE id = ?
+      LIMIT 1;
     `,
     [id],
   );
@@ -44,11 +46,12 @@ export async function createCompany(data: CreateCompanyDto) {
       INSERT INTO company
       (
         name_company,
+         telefono,
         discount_percentage
       )
-      VALUES (?, ?)
+      VALUES (?, ?, ?)
     `,
-    [data.nameCompany, data.discountPercentage],
+    [data.nameCompany, data.telefono, data.discountPercentage],
   );
 
   return result;

@@ -191,7 +191,7 @@ export default function HeaderCarouselUpload() {
       ======================================== */}
 
       {images.length > 0 ? (
-        <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-purple-500/20 bg-black/20">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#0a0a0c]">
           <Swiper
             modules={[Autoplay, Pagination, EffectFade]}
             effect="fade"
@@ -218,7 +218,7 @@ export default function HeaderCarouselUpload() {
                 />
 
                 {/* Overlay */}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-5 pt-12">
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-[#0e0e11]/90 via-[#0e0e11]/50 to-transparent p-5 pt-12">
                   <span className="text-sm font-medium text-white">
                     Imagen {index + 1}
                   </span>
@@ -227,7 +227,7 @@ export default function HeaderCarouselUpload() {
                     type="button"
                     onClick={() => handleDelete(image.id)}
                     disabled={deletingId === image.id}
-                    className="rounded-xl bg-red-600/90 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm font-medium text-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {deletingId === image.id ? "Eliminando..." : "Eliminar"}
                   </button>
@@ -237,13 +237,13 @@ export default function HeaderCarouselUpload() {
           </Swiper>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-dashed border-purple-500/30 bg-black/10">
+        <div className="flex min-h-0 flex-1 items-center justify-center rounded-[20px] border border-dashed border-white/[0.1] bg-[#0a0a0c]/50">
           <div className="text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-zinc-400">
               No hay imágenes en el carrusel
             </p>
 
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="mt-1 text-xs text-zinc-600">
               Selecciona una imagen para comenzar
             </p>
           </div>
@@ -255,16 +255,16 @@ export default function HeaderCarouselUpload() {
       ======================================== */}
 
       {preview && (
-        <div className="relative h-24 shrink-0 overflow-hidden rounded-xl border border-purple-500/20">
+        <div className="relative h-24 shrink-0 overflow-hidden rounded-xl border border-orange-500/30 shadow-[0_0_20px_rgba(251,146,60,0.15)]">
           <img
             src={preview}
             alt="Preview"
             className="h-full w-full object-cover"
           />
 
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="rounded-lg bg-black/60 px-3 py-1 text-xs text-white">
-              Nueva imagen
+          <div className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px]">
+            <span className="rounded-lg border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-medium text-orange-200">
+              Nueva imagen lista para subir
             </span>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function HeaderCarouselUpload() {
       <div className="flex shrink-0 items-center gap-3">
         <label
           htmlFor="header-image"
-          className="cursor-pointer rounded-xl bg-purple-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-purple-700"
+          className="cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3 text-sm font-medium text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-300"
         >
           Seleccionar imagen
         </label>
@@ -295,7 +295,7 @@ export default function HeaderCarouselUpload() {
             type="button"
             onClick={handleUpload}
             disabled={uploading}
-            className="rounded-xl bg-green-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-orange-500/30 bg-orange-500/20 px-5 py-3 text-sm font-medium text-orange-200 shadow-[0_0_20px_rgba(251,146,60,0.2)] transition hover:bg-orange-500/30 hover:border-orange-400/60 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading ? "Subiendo..." : "Subir al carrusel"}
           </button>

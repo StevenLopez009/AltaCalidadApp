@@ -3,9 +3,37 @@ import CompanyList from "@/src/modules/company/components/CompanyList";
 
 export default function CompaniesPage() {
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-8 p-8">
-      <CompanyForm />
-      <CompanyList />
-    </div>
+    <main className="min-h-screen bg-[#0B0914]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* HEADER */}
+        <div className="mb-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-400">
+                Administración
+              </p>
+
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                Empresas
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+                Gestiona las empresas y configura los descuentos aplicados a sus
+                pedidos.
+              </p>
+            </div>
+
+            <div className="w-fit rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300">
+              Gestión comercial
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <CompanyForm />
+          <CompanyList />
+        </div>
+      </div>
+    </main>
   );
 }
