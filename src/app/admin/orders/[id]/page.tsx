@@ -238,7 +238,7 @@ export default function OrderDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0914] p-8 text-white">
+      <div className="min-h-screen bg-[#121215] p-8 text-white">
         Cargando pedido...
       </div>
     );
@@ -246,7 +246,7 @@ export default function OrderDetailsPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#0B0914] p-8 text-white">
+      <div className="min-h-screen bg-[#121215] p-8 text-white">
         Pedido no encontrado.
       </div>
     );
@@ -268,42 +268,44 @@ export default function OrderDetailsPage() {
   const calculatedPaymentStatus = getPaymentStatus(paid, total);
 
   return (
-    <div className="min-h-screen bg-[#0B0914] p-8 text-white">
+    <div className="min-h-screen bg-[#121215] p-8 text-white">
       <div className="mx-auto max-w-6xl">
         {/* HEADER */}
         <div className="mb-8">
-          <p className="text-sm text-gray-500">Administración / Pedidos</p>
+          <p className="text-xs text-zinc-500">Administración / Pedidos</p>
 
-          <h1 className="mt-2 text-3xl font-semibold">Pedido #{order.id}</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            Pedido #{order.id}
+          </h1>
         </div>
 
         {/* INFORMACIÓN GENERAL */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {/* EMPRESA */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <p className="text-xs text-gray-500">Empresa</p>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <p className="text-xs text-zinc-500">Empresa</p>
 
-            <p className="mt-2 text-lg font-medium">{order.companyName}</p>
+            <p className="mt-2 text-base font-semibold">{order.companyName}</p>
           </div>
 
           {/* FECHA */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <p className="text-xs text-gray-500">Fecha de entrega</p>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <p className="text-xs text-zinc-500">Fecha de entrega</p>
 
-            <p className="mt-2 text-lg font-medium">
+            <p className="mt-2 text-base font-semibold">
               {formatDeliveryDate(order.deliveryDate)}
             </p>
           </div>
 
           {/* ESTADO DEL PEDIDO */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <p className="text-xs text-gray-500">Estado</p>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <p className="text-xs text-zinc-500">Estado</p>
 
             <select
               value={order.status}
               onChange={handleStatusChange}
               disabled={updatingStatus}
-              className="mt-2 w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-sm text-white outline-none transition focus:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#121215] px-3 py-2 text-xs text-white outline-none transition focus:border-orange-500/40 focus:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {orderStatuses.map((status) => (
                 <option key={status.value} value={status.value}>
@@ -313,24 +315,24 @@ export default function OrderDetailsPage() {
             </select>
 
             {updatingStatus && (
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-[11px] text-zinc-500">
                 Actualizando estado...
               </p>
             )}
           </div>
 
           {/* ESTADO DE PAGO */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <p className="text-xs text-gray-500">Estado de pago</p>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <p className="text-xs text-zinc-500">Estado de pago</p>
 
             <div className="mt-2">
               <span
-                className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                   calculatedPaymentStatus === "pagado"
-                    ? "bg-green-500/10 text-green-400"
+                    ? "border border-green-500/30 bg-green-500/10 text-green-400"
                     : calculatedPaymentStatus === "pago_parcial"
-                      ? "bg-yellow-500/10 text-yellow-400"
-                      : "bg-red-500/10 text-red-400"
+                      ? "border border-orange-500/30 bg-orange-500/10 text-orange-400"
+                      : "border border-red-500/30 bg-red-500/10 text-red-400"
                 }`}
               >
                 {calculatedPaymentStatus === "pagado"
@@ -344,28 +346,33 @@ export default function OrderDetailsPage() {
         </div>
 
         {/* ITEMS */}
-        <div className="mt-6 rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-          <h2 className="mb-5 text-xl font-semibold">Servicios</h2>
+        <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+          <h2 className="mb-5 text-lg font-semibold text-white">Servicios</h2>
 
           <div className="space-y-3">
             {order.items.map((item) => (
-              <div key={item.id} className="rounded-xl bg-[#0B0914] p-4">
+              <div
+                key={item.id}
+                className="rounded-xl border border-white/[0.06] bg-[#121215] p-4"
+              >
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-medium">{item.serviceName}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {item.serviceName}
+                    </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-xs text-zinc-500">
                       Cantidad: {item.quantity}
                     </p>
 
                     {item.width && item.height && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-zinc-500">
                         Medidas: {item.width} × {item.height}
                       </p>
                     )}
                   </div>
 
-                  <p className="font-semibold text-purple-400">
+                  <p className="text-sm font-semibold text-orange-300">
                     ${Number(item.subtotal).toLocaleString("es-CO")}
                   </p>
                 </div>
@@ -377,17 +384,19 @@ export default function OrderDetailsPage() {
         {/* TOTALES Y PAGOS */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* TOTALES */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <h2 className="mb-5 text-xl font-semibold">Resumen del pedido</h2>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <h2 className="mb-5 text-lg font-semibold text-white">
+              Resumen del pedido
+            </h2>
 
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Subtotal</span>
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">Subtotal</span>
 
               <span>${Number(order.subtotal).toLocaleString("es-CO")}</span>
             </div>
 
-            <div className="mt-3 flex justify-between text-sm">
-              <span className="text-gray-500">
+            <div className="mt-3 flex justify-between text-xs">
+              <span className="text-zinc-500">
                 Descuento ({order.discountPercentage}%)
               </span>
 
@@ -398,11 +407,11 @@ export default function OrderDetailsPage() {
             </div>
 
             {/* ABONO */}
-            <div className="mt-4 border-t border-purple-500/10 pt-4">
+            <div className="mt-4 border-t border-white/[0.06] pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Total abonado</span>
+                <span className="text-xs text-zinc-500">Total abonado</span>
 
-                <span className="text-lg font-semibold text-green-400">
+                <span className="text-sm font-semibold text-green-400">
                   ${paid.toLocaleString("es-CO")}
                 </span>
               </div>
@@ -411,20 +420,20 @@ export default function OrderDetailsPage() {
             {/* SALDO */}
             <div className="mt-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Saldo pendiente</span>
+                <span className="text-xs text-zinc-500">Saldo pendiente</span>
 
-                <span className="text-lg font-semibold text-yellow-400">
+                <span className="text-sm font-semibold text-orange-400">
                   ${pending.toLocaleString("es-CO")}
                 </span>
               </div>
             </div>
 
             {/* TOTAL */}
-            <div className="mt-4 border-t border-purple-500/10 pt-4">
+            <div className="mt-4 border-t border-white/[0.06] pt-4">
               <div className="flex justify-between">
-                <span className="font-semibold">Total</span>
+                <span className="text-xs font-semibold text-white">Total</span>
 
-                <span className="text-xl font-bold text-purple-400">
+                <span className="text-base font-bold text-orange-300">
                   ${total.toLocaleString("es-CO")}
                 </span>
               </div>
@@ -432,19 +441,21 @@ export default function OrderDetailsPage() {
           </div>
 
           {/* PAGOS */}
-          <div className="rounded-2xl border border-purple-500/20 bg-[#161325] p-6">
-            <h2 className="mb-5 text-xl font-semibold">Información de pago</h2>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <h2 className="mb-5 text-lg font-semibold text-white">
+              Información de pago
+            </h2>
 
             {/* TOTAL */}
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Total del pedido</span>
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">Total del pedido</span>
 
               <span>${total.toLocaleString("es-CO")}</span>
             </div>
 
             {/* ABONO */}
             <div className="mt-4">
-              <label className="mb-2 block text-sm text-gray-500">
+              <label className="mb-2 block text-xs text-zinc-500">
                 Registrar abono
               </label>
 
@@ -456,7 +467,7 @@ export default function OrderDetailsPage() {
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(e.target.value)}
                   disabled={updatingAmountPaid}
-                  className="w-full rounded-lg border border-purple-500/20 bg-[#0B0914] px-3 py-2 text-sm text-white outline-none focus:border-purple-500 disabled:opacity-50"
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#121215] px-3 py-2 text-xs text-white outline-none focus:border-orange-500/40 focus:bg-orange-500/5 disabled:opacity-50"
                   placeholder="0"
                 />
 
@@ -464,23 +475,23 @@ export default function OrderDetailsPage() {
                   type="button"
                   onClick={handleAmountPaidChange}
                   disabled={updatingAmountPaid}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl border border-orange-500/30 bg-orange-500/15 px-4 py-2 text-xs font-semibold text-orange-300 shadow-[0_0_15px_rgba(251,146,60,0.15)] transition hover:bg-orange-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {updatingAmountPaid ? "Guardando..." : "Guardar"}
                 </button>
               </div>
 
-              <p className="mt-2 text-[10px] text-gray-600">
+              <p className="mt-2 text-[10px] text-zinc-600">
                 El estado del pago se calcula automáticamente.
               </p>
             </div>
 
             {/* ABONADO */}
-            <div className="mt-5 border-t border-purple-500/10 pt-4">
+            <div className="mt-5 border-t border-white/[0.06] pt-4">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Total abonado</span>
+                <span className="text-xs text-zinc-500">Total abonado</span>
 
-                <span className="text-lg font-semibold text-green-400">
+                <span className="text-sm font-semibold text-green-400">
                   ${paid.toLocaleString("es-CO")}
                 </span>
               </div>
@@ -489,26 +500,28 @@ export default function OrderDetailsPage() {
             {/* SALDO */}
             <div className="mt-4">
               <div className="flex justify-between">
-                <span className="font-semibold">Saldo pendiente</span>
+                <span className="text-xs font-semibold text-white">
+                  Saldo pendiente
+                </span>
 
-                <span className="text-xl font-bold text-yellow-400">
+                <span className="text-base font-bold text-orange-400">
                   ${pending.toLocaleString("es-CO")}
                 </span>
               </div>
             </div>
 
             {/* ESTADO */}
-            <div className="mt-5 border-t border-purple-500/10 pt-4">
+            <div className="mt-5 border-t border-white/[0.06] pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Estado de pago</span>
+                <span className="text-xs text-zinc-500">Estado de pago</span>
 
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     calculatedPaymentStatus === "pagado"
-                      ? "bg-green-500/10 text-green-400"
+                      ? "border border-green-500/30 bg-green-500/10 text-green-400"
                       : calculatedPaymentStatus === "pago_parcial"
-                        ? "bg-yellow-500/10 text-yellow-400"
-                        : "bg-red-500/10 text-red-400"
+                        ? "border border-orange-500/30 bg-orange-500/10 text-orange-400"
+                        : "border border-red-500/30 bg-red-500/10 text-red-400"
                   }`}
                 >
                   {calculatedPaymentStatus === "pagado"

@@ -154,9 +154,9 @@ export default function Calendar() {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-xl font-semibold text-white">Calendario</h2>
+          <h2 className="text-lg font-semibold text-white">Calendario</h2>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-zinc-500">
             {months[month]} {year}
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function Calendar() {
           <button
             type="button"
             onClick={previousMonth}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0B0914] text-gray-400 transition hover:bg-purple-600 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-300"
           >
             ←
           </button>
@@ -173,7 +173,7 @@ export default function Calendar() {
           <button
             type="button"
             onClick={goToToday}
-            className="rounded-lg bg-[#0B0914] px-3 py-2 text-xs text-gray-400 transition hover:bg-purple-600 hover:text-white"
+            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-300"
           >
             Hoy
           </button>
@@ -181,7 +181,7 @@ export default function Calendar() {
           <button
             type="button"
             onClick={nextMonth}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0B0914] text-gray-400 transition hover:bg-purple-600 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-300"
           >
             →
           </button>
@@ -194,7 +194,7 @@ export default function Calendar() {
         {daysOfWeek.map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-medium text-gray-500"
+            className="text-center text-[11px] font-medium text-zinc-500"
           >
             {day}
           </div>
@@ -231,16 +231,17 @@ export default function Calendar() {
                 flex-col
                 items-center
                 justify-center
-                rounded-lg
-                text-sm
+                rounded-xl
+                text-xs
+                font-medium
                 transition
 
                 ${
                   isSelected
-                    ? "bg-pink-600 text-white"
+                    ? "border border-orange-500/40 bg-orange-500/20 text-white shadow-[0_0_15px_rgba(251,146,60,0.2)]"
                     : hasOrders
-                      ? "bg-purple-600 text-white hover:bg-purple-500/20"
-                      : "text-gray-300 hover:bg-purple-500/20"
+                      ? "border border-orange-500/20 bg-orange-500/10 text-orange-200 hover:border-orange-500/40 hover:bg-orange-500/15"
+                      : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
                 }
               `}
             >
@@ -254,12 +255,12 @@ export default function Calendar() {
                 <span
                   className={`
                     absolute
-                    bottom-1
+                    bottom-1.5
                     h-1.5
                     w-1.5
                     rounded-full
 
-                    ${isSelected ? "bg-white" : "bg-purple-400"}
+                    ${isSelected ? "bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,1)]" : "bg-orange-400/80"}
                   `}
                 />
               )}
@@ -270,11 +271,11 @@ export default function Calendar() {
                 <span
                   className="
                     absolute
-                    right-1
+                    right-1.5
                     top-1
                     text-[9px]
                     font-semibold
-                    text-purple-300
+                    text-orange-300
                   "
                 >
                   {dayOrders.length}
@@ -287,11 +288,11 @@ export default function Calendar() {
                 <span
                   className="
                       absolute
-                      bottom-1
+                      bottom-1.5
                       h-1
                       w-1
                       rounded-full
-                      bg-purple-400
+                      bg-zinc-400
                     "
                 />
               )}
@@ -303,7 +304,7 @@ export default function Calendar() {
       {/* Loading */}
 
       {loading && (
-        <p className="mt-2 text-center text-xs text-gray-500">
+        <p className="mt-2 text-center text-xs text-zinc-500">
           Cargando pedidos...
         </p>
       )}
@@ -311,12 +312,12 @@ export default function Calendar() {
       {/* Información del día seleccionado */}
 
       {!loading && (
-        <div className="mt-3 border-t border-purple-500/10 pt-3">
-          <p className="text-xs text-gray-500">
+        <div className="mt-3 border-t border-white/[0.06] pt-3">
+          <p className="text-[11px] text-zinc-500">
             {selectedDate} de {months[month]}
           </p>
 
-          <p className="text-sm text-white">
+          <p className="text-xs font-semibold text-white">
             {getOrdersForDay(selectedDate).length === 0
               ? "Sin pedidos"
               : `${getOrdersForDay(selectedDate).length} pedido${
