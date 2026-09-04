@@ -99,43 +99,80 @@ export default function MaterialForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-5xl mx-auto rounded-3xl border border-purple-500/20 bg-[#161325] p-10 shadow-xl"
+      className="
+        mx-auto max-w-5xl
+        rounded-3xl
+        border border-orange-500/20
+        bg-[#15100D]
+        p-10
+        shadow-xl shadow-orange-500/5
+      "
     >
       <h2 className="mb-8 text-3xl font-bold text-white">Crear Material</h2>
 
       <div className="grid grid-cols-2 gap-6">
+        {/* Categoría */}
         <div>
-          <label className="text-sm text-white/60">Categoría</label>
+          <label className="mb-2 block text-sm text-white/60">Categoría</label>
 
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
             required
           >
             <option value="">Seleccione una categoría</option>
 
             {categories.map((category) => (
-              <option key={category.id} value={category.id}>
+              <option
+                key={category.id}
+                value={category.id}
+                className="bg-[#1A120C]"
+              >
                 {category.name}
               </option>
             ))}
           </select>
         </div>
 
+        {/* Nombre */}
         <div>
-          <label className="mb-2 block text-sm text-gray-300">Nombre</label>
+          <label className="mb-2 block text-sm text-white/60">Nombre</label>
 
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              placeholder:text-white/20
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           />
         </div>
 
+        {/* Descripción */}
         <div className="col-span-2">
-          <label className="mb-2 block text-sm text-gray-300">
+          <label className="mb-2 block text-sm text-white/60">
             Descripción
           </label>
 
@@ -144,18 +181,42 @@ export default function MaterialForm() {
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              resize-none
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           />
         </div>
 
+        {/* Unidad */}
         <div>
-          <label className="mb-2 block text-sm text-gray-300">Unidad</label>
+          <label className="mb-2 block text-sm text-white/60">Unidad</label>
 
           <select
             name="unit"
             value={form.unit}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           >
             <option value="unidad">Unidad</option>
             <option value="rollo">Rollo</option>
@@ -167,8 +228,9 @@ export default function MaterialForm() {
           </select>
         </div>
 
+        {/* Stock inicial */}
         <div>
-          <label className="mb-2 block text-sm text-gray-300">
+          <label className="mb-2 block text-sm text-white/60">
             Stock Inicial
           </label>
 
@@ -177,12 +239,24 @@ export default function MaterialForm() {
             name="stock"
             value={form.stock}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           />
         </div>
 
+        {/* Stock mínimo */}
         <div>
-          <label className="mb-2 block text-sm text-gray-300">
+          <label className="mb-2 block text-sm text-white/60">
             Stock Mínimo
           </label>
 
@@ -191,12 +265,24 @@ export default function MaterialForm() {
             name="minimumStock"
             value={form.minimumStock}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           />
         </div>
 
+        {/* Costo */}
         <div>
-          <label className="mb-2 block text-sm text-gray-300">
+          <label className="mb-2 block text-sm text-white/60">
             Costo Unitario
           </label>
 
@@ -205,22 +291,57 @@ export default function MaterialForm() {
             name="unitCost"
             value={form.unitCost}
             onChange={handleChange}
-            className="w-full rounded-xl border border-purple-500/20 bg-[#211B3A] p-3 text-white"
+            className="
+              w-full rounded-xl
+              border border-orange-500/20
+              bg-[#1A120C]
+              p-3
+              text-white
+              outline-none
+              transition
+              focus:border-orange-400
+              focus:ring-2
+              focus:ring-orange-500/20
+            "
           />
         </div>
       </div>
 
+      {/* Botones */}
       <div className="mt-10 flex justify-end gap-4">
         <button
           type="button"
-          className="rounded-xl border border-gray-600 px-6 py-3 text-gray-300"
+          className="
+            rounded-xl
+            border border-white/10
+            bg-white/5
+            px-6 py-3
+            text-white/60
+            transition
+            hover:border-white/20
+            hover:bg-white/10
+            hover:text-white
+          "
         >
           Cancelar
         </button>
 
         <button
           type="submit"
-          className="rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-8 py-3 font-semibold text-white transition hover:scale-105"
+          className="
+            rounded-xl
+            bg-gradient-to-r
+            from-orange-500
+            to-red-500
+            px-8 py-3
+            font-semibold
+            text-white
+            shadow-lg
+            shadow-orange-500/20
+            transition-all
+            hover:scale-105
+            hover:shadow-orange-500/30
+          "
         >
           Guardar Material
         </button>

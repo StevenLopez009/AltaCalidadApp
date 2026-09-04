@@ -132,29 +132,38 @@ export function ServiceForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl"
-    >
-      <h2 className="text-3xl font-black uppercase text-white">
-        Nuevo Servicio
-      </h2>
-
+    <form onSubmit={handleSubmit} className="w-full space-y-5">
       {/* Categoría */}
-
-      <div className="mt-6">
-        <label className="text-sm text-white/60">Categoría</label>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">Categoría</label>
 
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
+          className="
+        w-full rounded-xl
+        border border-white/10
+        bg-[#0B0914]
+        px-4 py-3
+        text-sm text-white
+        outline-none
+        transition-all
+        focus:border-orange-500/60
+        focus:ring-2
+        focus:ring-orange-500/10
+      "
           required
         >
-          <option value="">Seleccione...</option>
+          <option value="" className="bg-[#0B0914]">
+            Selecciona una categoría
+          </option>
 
           {categories.map((category) => (
-            <option key={category.id} value={category.id}>
+            <option
+              key={category.id}
+              value={category.id}
+              className="bg-[#0B0914]"
+            >
               {category.name}
             </option>
           ))}
@@ -162,109 +171,225 @@ export function ServiceForm() {
       </div>
 
       {/* Nombre */}
-
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Nombre</label>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">
+          Nombre del servicio
+        </label>
 
         <input
+          type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
+          placeholder="Ej. Diseño e impresión de pendones"
+          className="
+        w-full rounded-xl
+        border border-white/10
+        bg-[#0B0914]
+        px-4 py-3
+        text-sm text-white
+        placeholder:text-white/25
+        outline-none
+        transition-all
+        focus:border-orange-500/60
+        focus:ring-2
+        focus:ring-orange-500/10
+      "
           required
         />
       </div>
 
       {/* Descripción */}
-
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Descripción</label>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">Descripción</label>
 
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-2 h-32 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
-          required
+          placeholder="Describe el servicio..."
+          rows={3}
+          className="
+        w-full resize-none rounded-xl
+        border border-white/10
+        bg-[#0B0914]
+        px-4 py-3
+        text-sm text-white
+        placeholder:text-white/25
+        outline-none
+        transition-all
+        focus:border-orange-500/60
+        focus:ring-2
+        focus:ring-orange-500/10
+      "
         />
       </div>
 
-      {/* Unidad de venta */}
+      {/* Unidad + Precio */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-white/80">
+            Unidad de cobro
+          </label>
 
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Unidad de venta</label>
+          <select
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="
+          w-full rounded-xl
+          border border-white/10
+          bg-[#0B0914]
+          px-4 py-3
+          text-sm text-white
+          outline-none
+          transition-all
+          focus:border-orange-500/60
+          focus:ring-2
+          focus:ring-orange-500/10
+        "
+          >
+            <option value="unidad">Unidad</option>
+            <option value="m2">Metro cuadrado</option>
+            <option value="metro">Metro</option>
+            <option value="minuto">Minuto</option>
+          </select>
+        </div>
 
-        <select
-          value={unit}
-          onChange={(e) => setUnit(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
-          required
-        >
-          <option value="m2">Metro cuadrado (m²)</option>
-          <option value="metro">Metro lineal (m)</option>
-          <option value="unidad">Unidad</option>
-          <option value="rollo">Rollo</option>
-          <option value="hoja">Hoja</option>
-          <option value="kg">Kilogramo (Kg)</option>
-          <option value="litro">Litro (L)</option>
-          <option value="minuto">Minuto</option>
-          <option value="hora">Hora</option>
-        </select>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-white/80">Precio</label>
+
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30">
+              $
+            </span>
+
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0"
+              className="
+            w-full rounded-xl
+            border border-white/10
+            bg-[#0B0914]
+            py-3 pl-9 pr-4
+            text-sm text-white
+            placeholder:text-white/25
+            outline-none
+            transition-all
+            focus:border-orange-500/60
+            focus:ring-2
+            focus:ring-orange-500/10
+          "
+              required
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Material</label>
+      {/* Material */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">
+          Material asociado
+        </label>
 
         <select
           value={materialId}
           onChange={(e) => setMaterialId(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
-          required
+          className="
+        w-full rounded-xl
+        border border-white/10
+        bg-[#0B0914]
+        px-4 py-3
+        text-sm text-white
+        outline-none
+        transition-all
+        focus:border-orange-500/60
+        focus:ring-2
+        focus:ring-orange-500/10
+      "
         >
-          <option value="">Seleccione...</option>
+          <option value="" className="bg-[#0B0914]">
+            Selecciona un material
+          </option>
 
           {materials.map((material) => (
-            <option key={material.id} value={material.id}>
+            <option
+              key={material.id}
+              value={material.id}
+              className="bg-[#0B0914]"
+            >
               {material.name}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Precio */}
-
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Precio</label>
-
-        <input
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white"
-          required
-        />
-      </div>
-
       {/* Imagen */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">
+          Imagen del servicio
+        </label>
 
-      <div className="mt-5">
-        <label className="text-sm text-white/60">Imagen</label>
-
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:font-semibold file:text-white"
-        />
+        <div
+          className="
+        rounded-xl
+        border border-dashed border-white/10
+        bg-[#0B0914]/70
+        p-4
+        transition-all
+        hover:border-orange-500/30
+      "
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="
+          block w-full
+          text-sm text-white/50
+          file:mr-4
+          file:rounded-lg
+          file:border-0
+          file:bg-orange-500/10
+          file:px-4
+          file:py-2
+          file:text-sm
+          file:font-medium
+          file:text-orange-400
+          hover:file:bg-orange-500/20
+          file:cursor-pointer
+        "
+          />
+        </div>
 
         {preview && (
-          <div className="relative mt-5 h-60 overflow-hidden rounded-2xl">
-            <Image src={preview} alt="Preview" fill className="object-cover" />
+          <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
+            <img
+              src={preview}
+              alt="Vista previa"
+              className="h-36 w-full object-cover"
+            />
           </div>
         )}
       </div>
 
+      {/* Botón */}
       <button
+        type="submit"
         disabled={loading}
-        className="mt-8 w-full rounded-xl bg-orange-500 py-3 font-bold uppercase text-white transition hover:bg-orange-600 disabled:opacity-50"
+        className="
+      w-full rounded-xl
+      bg-gradient-to-r
+      from-orange-500
+      to-red-500
+      px-5 py-3
+      text-sm font-semibold text-white
+      shadow-lg shadow-orange-500/10
+      transition-all
+      hover:-translate-y-0.5
+      hover:shadow-orange-500/20
+      disabled:cursor-not-allowed
+      disabled:opacity-50
+    "
       >
         {loading ? "Guardando..." : "Crear servicio"}
       </button>

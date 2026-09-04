@@ -14,148 +14,314 @@ import { Building2, Package, ShoppingCart } from "lucide-react";
 
 export default function AdminDashboard() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0c] p-5 text-white md:p-8">
-      {/* Fondo ambiental difuminado para dar profundidad (con tonos naranja) */}
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute -top-32 left-[10%] h-[500px] w-[500px] rounded-full bg-orange-900/10 blur-[160px]" />
-        <div className="absolute top-[30%] -right-20 h-[450px] w-[450px] rounded-full bg-amber-900/10 blur-[160px]" />
+    <div className="min-h-screen bg-[#0d0d0d] text-[#f7f4ed]">
+      {/* GRID DECORATIVO */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.035]">
+        <div
+          className="h-full w-full"
+          style={{
+            backgroundImage:
+              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+          }}
+        />
       </div>
 
-      <div className="relative grid grid-cols-12 auto-rows-[150px] gap-5">
-        {/* Sidebar */}
+      <div className="relative mx-auto max-w-[1800px] p-4 md:p-6 lg:p-8">
+        {/* SIDEBAR */}
         <AdminSidebar />
 
-        {/* Header */}
-        <header className="col-span-10 row-span-2 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215]/90 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-          <HeaderCarouselUpload />
-        </header>
+        {/* CONTENIDO */}
+        <main className="ml-0 lg:ml-[260px]">
+          {/* ===================================================== */}
+          {/* HEADER / HERO */}
+          {/* ===================================================== */}
+          <section
+            className="
+      relative
+      mb-6
+      h-[500px]
+      overflow-hidden
+      rounded-[32px]
+      bg-[#171717]
+      lg:h-[400px]
+    "
+          >
+            {/* BLOQUES DE COLOR */}
+            <div className="absolute right-0 top-0 h-full w-[35%] bg-gradient-to-br from-[#FFD21C] via-[#FF7A00] to-[#FF3030]" />
 
-        {/* Empresas (con acento naranja) */}
-        <Link
-          href="/admin/company"
-          className="
-            group relative col-span-2 overflow-hidden rounded-[24px]
-            border border-white/[0.08]
-            bg-gradient-to-b from-[#16161a] to-[#0e0e11]
-            p-5
-            shadow-[0_10px_30px_rgba(0,0,0,0.5)]
-            transition-all duration-300
-            hover:-translate-y-1.5
-            hover:border-orange-500/40
-            hover:shadow-[0_0_40px_rgba(251,146,60,0.15)]
-          "
-        >
-          <div className="absolute -bottom-12 -right-12 h-36 w-36 rounded-full bg-orange-500/10 blur-[60px] transition-all duration-500 group-hover:scale-125 group-hover:bg-orange-500/20" />
-          <div className="absolute right-4 top-4 h-2 w-2 rounded-full bg-zinc-600 transition-colors group-hover:bg-orange-400 group-hover:shadow-[0_0_10px_rgba(251,146,60,0.8)]" />
+            <div className="absolute right-[22%] top-0 h-full w-[2px] rotate-[12deg] bg-black/20" />
 
-          <div className="relative flex h-full flex-col">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-zinc-300 shadow-inner transition-all group-hover:border-orange-500/30 group-hover:bg-orange-500/10 group-hover:text-orange-300">
-              <Building2 className="h-5 w-5" />
+            <div className="relative z-10 grid h-full grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
+              {/* TEXTO */}
+              <div className="flex flex-col justify-between p-7 md:p-10 lg:p-12">
+                <div>
+                  <div className="mb-8 flex items-center gap-3">
+                    <span className="h-3 w-3 rounded-full bg-[#FFD21C]" />
+
+                    <span className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
+                      ALTA CALIDAD / ADMIN
+                    </span>
+                  </div>
+
+                  <h1 className="max-w-xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.05em] md:text-6xl lg:text-7xl">
+                    Creamos.
+                    <br />
+                    Producimos.
+                    <br />
+                    <span className="text-[#FFD21C]">Entregamos.</span>
+                  </h1>
+                </div>
+
+                <div className="mt-10 flex items-center gap-4">
+                  <div className="h-[2px] w-16 bg-[#FF7A00]" />
+
+                  <p className="text-sm text-zinc-400">
+                    Centro de control de producción
+                  </p>
+                </div>
+              </div>
+
+              {/* CARRUSEL */}
+              <div className="relative h-full min-h-0 overflow-hidden">
+                <HeaderCarouselUpload />
+              </div>
+            </div>
+          </section>
+          <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {/* EMPRESAS */}
+            <Link
+              href="/admin/company"
+              className="
+              group relative min-h-[190px]
+              overflow-hidden rounded-2xl
+              bg-[#F7F4ED] p-7 text-[#111]
+              transition-all duration-300
+              hover:-translate-y-1
+            "
+            >
+              <span className="absolute right-5 top-4 text-xs font-black text-black/30">
+                01
+              </span>
+
+              <div className="flex h-full flex-col justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#111] text-[#FFD21C]">
+                  <Building2 className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-black/40">
+                    Gestión
+                  </p>
+
+                  <h2 className="text-3xl font-black uppercase tracking-tight">
+                    Empresas
+                  </h2>
+                </div>
+              </div>
+            </Link>
+
+            {/* CATÁLOGO */}
+            <Link
+              href="/admin/categories"
+              className="
+              group relative min-h-[190px]
+              overflow-hidden rounded-2xl
+              bg-[#FFD21C] p-7 text-[#111]
+              transition-all duration-300
+              hover:-translate-y-1
+            "
+            >
+              <span className="absolute right-5 top-4 text-xs font-black text-black/30">
+                02
+              </span>
+
+              <div className="flex h-full flex-col justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#111] text-[#FFD21C]">
+                  <Package className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-black/50">
+                    Catálogo
+                  </p>
+
+                  <h2 className="text-3xl font-black uppercase tracking-tight">
+                    Productos
+                    <br />& Servicios
+                  </h2>
+                </div>
+              </div>
+            </Link>
+
+            {/* CREAR PEDIDO */}
+            <Link
+              href="/admin/orders"
+              className="
+              group relative min-h-[190px]
+              overflow-hidden rounded-2xl
+              bg-gradient-to-br from-[#FF7A00] to-[#FF3030]
+              p-7 text-white
+              transition-all duration-300
+              hover:-translate-y-1
+            "
+            >
+              <span className="absolute right-5 top-4 text-xs font-black text-white/50">
+                03
+              </span>
+
+              <div className="flex h-full flex-col justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#FF3030]">
+                  <ShoppingCart className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-white/70">
+                    Operaciones
+                  </p>
+
+                  <h2 className="text-4xl font-black uppercase tracking-tight">
+                    Nuevo
+                    <br />
+                    Pedido +
+                  </h2>
+                </div>
+              </div>
+            </Link>
+          </section>
+          {/* ===================================================== */}
+          {/* PEDIDOS */}
+          {/* ===================================================== */}
+          <section className="mb-6">
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+                  04 / VISIÓN GENERAL
+                </span>
+
+                <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
+                  Pedidos
+                </h2>
+              </div>
+
+              <div className="hidden h-[2px] w-32 bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030] md:block" />
             </div>
 
-            <div className="mt-auto">
-              <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
-                Gestión
-              </p>
-              <h2 className="text-lg font-semibold tracking-tight text-white">
-                Empresas
+            <div className="min-h-[420px] overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
+              <OrdersOverview />
+            </div>
+          </section>
+          {/* ===================================================== */}
+          {/* OPERACIÓN */}
+          {/* ===================================================== */}
+
+          <section className="mb-6">
+            {/* ENCABEZADO */}
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FFD21C]">
+                  05 / OPERACIÓN
+                </span>
+
+                <h2 className="mt-1 text-3xl font-black uppercase tracking-[-0.03em] text-white">
+                  Producción
+                </h2>
+              </div>
+
+              <div className="hidden items-center gap-2 md:flex">
+                <span className="h-2 w-2 rounded-full bg-[#FFD21C]" />
+                <span className="h-2 w-2 rounded-full bg-[#FF7A00]" />
+                <span className="h-2 w-2 rounded-full bg-[#FF3030]" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              {/* ===================================================== */}
+              {/* CALENDARIO */}
+              {/* ===================================================== */}
+
+              <div
+                className="
+        relative
+        overflow-hidden
+        rounded-[20px]
+        border
+        border-white/[0.07]
+        bg-[#171717]
+        lg:col-span-7
+      "
+              >
+                {/* Línea superior */}
+                <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030]" />
+
+                <div className="p-5">
+                  <Calendar />
+                </div>
+              </div>
+
+              {/* ===================================================== */}
+              {/* COLA DE PRODUCCIÓN */}
+              {/* ===================================================== */}
+
+              <div
+                className="
+        relative
+        overflow-hidden
+        rounded-[20px]
+        border
+        border-white/[0.07]
+        bg-[#171717]
+        lg:col-span-5
+      "
+              >
+                {/* Línea superior */}
+                <div className="absolute left-0 top-0 h-1 w-full bg-[#FFD21C]" />
+
+                <div className="p-5">
+                  <ProductionQueue />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ===================================================== */}
+          {/* INVENTARIO + PENDIENTES */}
+          {/* ===================================================== */}
+          <section className="mb-6">
+            <div className="mb-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF3030]">
+                06 / CONTROL
+              </span>
+
+              <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
+                Estado de operación
               </h2>
             </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              {/* INVENTARIO */}
+              <div className="min-h-[400px] overflow-hidden rounded-2xl bg-[#171717] lg:col-span-8">
+                <InventoryStatus />
+              </div>
+
+              {/* PENDIENTES */}
+              <div className="min-h-[400px] overflow-hidden rounded-2xl bg-[#FF3030] p-5 text-white lg:col-span-4">
+                <PendingOrdersChart />
+              </div>
+            </div>
+          </section>
+          <div className="flex flex-col items-start justify-between gap-3 border-t border-white/10 py-6 text-xs uppercase tracking-[0.2em] text-zinc-500 md:flex-row md:items-center">
+            <span>ALTA CALIDAD</span>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#FFD21C]" />
+              <span className="h-2 w-2 rounded-full bg-[#FF7A00]" />
+              <span className="h-2 w-2 rounded-full bg-[#FF3030]" />
+            </div>
+
+            <span>Creative Production Center</span>
           </div>
-        </Link>
-
-        {/* Productos y servicios (con acento naranja) */}
-        <Link
-          href="/admin/categories"
-          className="
-            group relative col-span-4 overflow-hidden rounded-[24px]
-            border border-white/[0.08]
-            bg-gradient-to-b from-[#16161a] to-[#0e0e11]
-            p-5
-            shadow-[0_10px_30px_rgba(0,0,0,0.5)]
-            transition-all duration-300
-            hover:-translate-y-1.5
-            hover:border-orange-500/40
-            hover:shadow-[0_0_40px_rgba(251,146,60,0.15)]
-          "
-        >
-          <div className="absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-orange-500/15 blur-[70px] transition-all duration-500 group-hover:scale-125 group-hover:bg-orange-500/25" />
-          <div className="absolute right-4 top-4 h-2 w-2 rounded-full bg-zinc-600 transition-colors group-hover:bg-orange-400 group-hover:shadow-[0_0_10px_rgba(251,146,60,0.8)]" />
-
-          <div className="relative flex h-full flex-col">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-zinc-300 shadow-inner transition-all group-hover:border-orange-500/30 group-hover:bg-orange-500/10 group-hover:text-orange-300">
-              <Package className="h-5 w-5" />
-            </div>
-
-            <div className="mt-auto">
-              <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
-                Catálogo
-              </p>
-              <h2 className="text-lg font-semibold tracking-tight text-white">
-                Productos y servicios
-              </h2>
-            </div>
-          </div>
-        </Link>
-
-        {/* Crear pedido (Destacado con acento naranja intenso) */}
-        <Link
-          href="/admin/orders"
-          className="
-            group relative col-span-4 overflow-hidden rounded-[24px]
-            border border-orange-500/30
-            bg-gradient-to-br from-[#1f1614] via-[#161212] to-[#0e0e11]
-            p-5
-            shadow-[0_15px_40px_rgba(0,0,0,0.5)]
-            transition-all duration-300
-            hover:-translate-y-1.5
-            hover:border-orange-400/70
-            hover:shadow-[0_0_50px_rgba(251,146,60,0.25)]
-          "
-        >
-          <div className="absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-orange-500/25 blur-[80px] transition-all duration-500 group-hover:scale-125 group-hover:bg-orange-500/35" />
-          <div className="absolute right-4 top-4 h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,1)]" />
-
-          <div className="relative flex h-full flex-col">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/15 text-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.2)] transition-all group-hover:bg-orange-500/25">
-              <ShoppingCart className="h-5 w-5" />
-            </div>
-
-            <div className="mt-auto">
-              <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-orange-400/80">
-                Operaciones
-              </p>
-              <h2 className="text-lg font-semibold tracking-tight text-white">
-                Crear Pedido
-              </h2>
-            </div>
-          </div>
-        </Link>
-
-        {/* Calendario */}
-        <div className="col-span-6 row-span-2 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-          <Calendar />
-        </div>
-
-        {/* Cola de producción */}
-        <div className="col-span-4 row-span-2 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-          <ProductionQueue />
-        </div>
-
-        {/* Resumen de pedidos */}
-        <div className="col-span-12 row-span-3 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-          <OrdersOverview />
-        </div>
-
-        {/* Pendientes */}
-        <div className="col-span-4 row-span-2 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-          <PendingOrdersChart />
-        </div>
-
-        {/* Inventario */}
-        <div className="col-span-8 row-span-3 min-h-0 overflow-hidden rounded-[24px] border border-white/[0.06] bg-[#121215] shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-          <InventoryStatus />
-        </div>
+        </main>
       </div>
     </div>
   );

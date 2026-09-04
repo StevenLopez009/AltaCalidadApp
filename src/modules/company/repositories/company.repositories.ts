@@ -56,3 +56,15 @@ export async function createCompany(data: CreateCompanyDto) {
 
   return result;
 }
+
+export async function deleteCompany(id: number) {
+  const [result] = await db.query(
+    `
+      DELETE FROM company
+      WHERE id = ?
+    `,
+    [id],
+  );
+
+  return result;
+}

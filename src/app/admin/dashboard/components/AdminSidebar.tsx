@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
 import {
   Building2,
   Package,
@@ -10,12 +11,11 @@ import {
   House,
   Flame,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const menuItems = [
   {
     label: "Inicio",
-    href: "/admin",
+    href: "/admin/dashboard",
     icon: House,
   },
   {
@@ -55,54 +55,96 @@ export default function AdminSidebar() {
       console.error("Error cerrando sesión:", error);
     }
   }
+
   return (
     <aside
       className="
-        col-span-2
-        row-span-4
-        flex
-        min-h-[calc(100vh-4rem)]
+        fixed
+        left-4
+        top-4
+        z-40
+        hidden
+        h-[calc(100vh-2rem)]
+        w-[245px]
         flex-col
         overflow-hidden
-        rounded-[24px]
-        border
-        border-white/[0.06]
-        bg-[#121215]
-        shadow-[0_15px_40px_rgba(0,0,0,0.5)]
+        rounded-[28px]
+        bg-[#151515]
+        lg:flex
       "
     >
-      {/* Logo */}
-      <div className="border-b border-white/[0.06] px-6 py-6">
-        <Link href="/admin" className="flex items-center gap-3">
+      {/* ===================================================== */}
+      {/* LOGO */}
+      {/* ===================================================== */}
+
+      <div className="relative overflow-hidden border-b border-white/10 px-6 py-7">
+        {/* Decoración */}
+        <div
+          className="
+            pointer-events-none
+            absolute
+            -right-10
+            -top-10
+            h-32
+            w-32
+            rounded-full
+            bg-[#FFD21C]/10
+            blur-3xl
+          "
+        />
+
+        <Link href="/admin" className="group relative flex items-center gap-3">
+          {/* Logo */}
           <div
             className="
               flex
-              h-11
-              w-11
+              h-12
+              w-12
+              shrink-0
               items-center
               justify-center
               rounded-2xl
-              border
-              border-orange-500/30
-              bg-orange-500/15
-              text-orange-300
-              shadow-[0_0_20px_rgba(251,146,60,0.2)]
+              bg-gradient-to-br
+              from-[#FFD21C]
+              to-[#FF7A00]
+              text-[#111]
+              transition-transform
+              duration-300
+              group-hover:rotate-[-6deg]
+              group-hover:scale-105
             "
           >
-            <Flame className="h-6 w-6" />
+            <Flame className="h-6 w-6 fill-current" />
           </div>
 
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-white">
-              Alta Calidad
+          <div className="leading-none">
+            <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#FFD21C]">
+              Alta
+            </p>
+
+            <h1 className="mt-1 text-xl font-black uppercase tracking-[-0.04em] text-white">
+              Calidad
             </h1>
           </div>
         </Link>
       </div>
 
-      {/* Navegación */}
-      <nav className="flex flex-1 flex-col gap-1.5 px-4 py-4">
-        {menuItems.map((item) => {
+      {/* ===================================================== */}
+      {/* LABEL */}
+      {/* ===================================================== */}
+
+      <div className="px-6 pb-2 pt-7">
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">
+          Panel de control
+        </p>
+      </div>
+
+      {/* ===================================================== */}
+      {/* NAVEGACIÓN */}
+      {/* ===================================================== */}
+
+      <nav className="flex flex-1 flex-col gap-1 px-3 py-3">
+        {menuItems.map((item, index) => {
           const Icon = item.icon;
 
           const isActive =
@@ -110,101 +152,172 @@ export default function AdminSidebar() {
               ? pathname === "/admin"
               : pathname.startsWith(item.href);
 
+          const isOrder = item.href === "/admin/orders";
+
           return (
             <Link
               key={item.label}
               href={item.href}
               className={`
-                group
-                flex
-                items-center
-                gap-3.5
-                rounded-2xl
-                px-4
-                py-3.5
-                text-sm
-                font-medium
+                group relative flex items-center gap-3
+                overflow-hidden
+                rounded-xl
+                px-3
+                py-3
                 transition-all
-                duration-300
+                duration-200
+
                 ${
                   isActive
-                    ? `
-                        border
-                        border-orange-500/30
-                        bg-orange-500/15
-                        text-orange-200
-                        shadow-[0_0_20px_rgba(251,146,60,0.15)]
-                      `
-                    : `
-                        text-zinc-400
-                        hover:bg-white/[0.03]
-                        hover:text-zinc-200
-                      `
+                    ? "bg-[#FFD21C] text-[#111]"
+                    : isOrder
+                      ? "mt-2 bg-[#FF7A00] text-white hover:bg-[#ff8a1a]"
+                      : "text-zinc-400 hover:bg-white/[0.05] hover:text-white"
                 }
               `}
             >
-              <Icon
+              {/* Indicador lateral */}
+              {isActive && !isOrder && (
+                <span className="absolute left-0 top-0 h-full w-1 bg-[#FF3030]" />
+              )}
+
+              {/* Número */}
+              <span
                 className={`
-                  h-5
                   w-5
-                  shrink-0
-                  transition-all
-                  duration-300
+                  text-[9px]
+                  font-black
                   ${
                     isActive
-                      ? "text-orange-300"
-                      : "text-zinc-500 group-hover:text-orange-400 group-hover:scale-110"
+                      ? "text-black/40"
+                      : isOrder
+                        ? "text-white/50"
+                        : "text-zinc-700"
                   }
                 `}
-              />
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
 
-              <span>{item.label}</span>
+              {/* Icono */}
+              <div
+                className={`
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  transition-transform
+                  duration-200
+                  group-hover:scale-105
+
+                  ${
+                    isActive
+                      ? "bg-black/10"
+                      : isOrder
+                        ? "bg-white/15"
+                        : "bg-white/[0.04]"
+                  }
+                `}
+              >
+                <Icon className="h-4 w-4" />
+              </div>
+
+              {/* Texto */}
+              <span className="text-[13px] font-bold tracking-tight">
+                {item.label}
+              </span>
+
+              {/* Flecha */}
+              {isActive && (
+                <span className="ml-auto text-lg font-black leading-none">
+                  →
+                </span>
+              )}
+
+              {/* Indicador pedido */}
+              {isOrder && !isActive && (
+                <span className="ml-auto h-2 w-2 rounded-full bg-[#FFD21C]" />
+              )}
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="border-t border-white/[0.06] p-4">
+      {/* ===================================================== */}
+      {/* MARCA */}
+      {/* ===================================================== */}
+
+      <div className="mx-5 mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#FFD21C] via-[#FF7A00] to-[#FF3030] p-[1px]">
+        <div className="rounded-[15px] bg-[#151515] px-4 py-4">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">
+            Producción
+          </p>
+
+          <p className="mt-1 text-xs font-bold text-white">
+            Creamos. Producimos.
+          </p>
+
+          <div className="mt-3 flex gap-1">
+            <span className="h-1 flex-1 rounded-full bg-[#FFD21C]" />
+            <span className="h-1 flex-1 rounded-full bg-[#FF7A00]" />
+            <span className="h-1 flex-1 rounded-full bg-[#FF3030]" />
+          </div>
+        </div>
+      </div>
+
+      {/* ===================================================== */}
+      {/* LOGOUT */}
+      {/* ===================================================== */}
+
+      <div className="border-t border-white/10 p-3">
         <button
           type="button"
           onClick={handleLogout}
           className="
-    group
-    flex
-    w-full
-    items-center
-    gap-3.5
-    rounded-2xl
-    border
-    border-transparent
-    px-4
-    py-3.5
-    text-sm
-    font-medium
-    text-zinc-400
-    transition-all
-    duration-300
-
-    hover:border-red-500/30
-    hover:bg-red-500/10
-    hover:text-red-300
-    hover:shadow-[0_0_20px_rgba(239,68,68,0.15)]
-  "
+            group
+            flex
+            w-full
+            items-center
+            gap-3
+            rounded-xl
+            px-3
+            py-3
+            text-left
+            text-zinc-500
+            transition-all
+            duration-200
+            hover:bg-[#FF3030]/10
+            hover:text-[#FF5A5A]
+          "
         >
-          <LogOut
+          <div
             className="
-      h-5
-      w-5
-      shrink-0
-      transition-all
-      duration-300
-      group-hover:translate-x-1
-      group-hover:text-red-400
-    "
-          />
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-lg
+              bg-white/[0.04]
+              transition-colors
+              group-hover:bg-[#FF3030]/15
+            "
+          >
+            <LogOut
+              className="
+                h-4
+                w-4
+                transition-transform
+                duration-200
+                group-hover:translate-x-0.5
+              "
+            />
+          </div>
 
-          <span>Cerrar sesión</span>
+          <span className="text-[13px] font-bold">Cerrar sesión</span>
         </button>
       </div>
     </aside>
