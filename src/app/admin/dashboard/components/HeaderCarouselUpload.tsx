@@ -185,13 +185,13 @@ export default function HeaderCarouselUpload() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      {/* ========================================
-          CARRUSEL
-      ======================================== */}
+    <div className="relative h-full min-h-0 w-full overflow-hidden">
+      {/* ===================================================== */}
+      {/* CARRUSEL */}
+      {/* ===================================================== */}
 
       {images.length > 0 ? (
-        <div className="min-h-0 flex-1 overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#0a0a0c]">
+        <div className="relative h-full w-full overflow-hidden bg-[#0a0a0c]">
           <Swiper
             modules={[Autoplay, Pagination, EffectFade]}
             effect="fade"
@@ -217,17 +217,34 @@ export default function HeaderCarouselUpload() {
                   className="h-full w-full object-cover"
                 />
 
-                {/* Overlay */}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-[#0e0e11]/90 via-[#0e0e11]/50 to-transparent p-5 pt-12">
-                  <span className="text-sm font-medium text-white">
-                    Imagen {index + 1}
-                  </span>
+                {/* OVERLAY INFERIOR */}
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-[#0e0e11] via-[#0e0e11]/70 to-transparent p-5 pt-16">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD21C]">
+                      Carrusel
+                    </p>
+
+                    <span className="text-sm font-medium text-white">
+                      Imagen {index + 1}
+                    </span>
+                  </div>
 
                   <button
                     type="button"
                     onClick={() => handleDelete(image.id)}
                     disabled={deletingId === image.id}
-                    className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm font-medium text-red-300 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="
+                    rounded-xl
+                    border border-red-500/30
+                    bg-red-500/15
+                    px-4 py-2
+                    text-sm font-medium
+                    text-red-300
+                    transition
+                    hover:bg-red-500/25
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
                   >
                     {deletingId === image.id ? "Eliminando..." : "Eliminar"}
                   </button>
@@ -235,9 +252,101 @@ export default function HeaderCarouselUpload() {
               </SwiperSlide>
             ))}
           </Swiper>
+
+          {/* ================================================= */}
+          {/* CONTROLES DENTRO DEL CARRUSEL */}
+          {/* ================================================= */}
+
+          <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
+            {/* INPUT */}
+            <label
+              htmlFor="header-image"
+              className="
+              cursor-pointer
+              rounded-xl
+              border border-white/20
+              bg-black/60
+              px-4 py-2.5
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-white
+              shadow-lg
+              backdrop-blur-md
+              transition
+              hover:border-[#FFD21C]/60
+              hover:bg-[#FFD21C]
+              hover:text-black
+            "
+            >
+              + Seleccionar imagen
+            </label>
+
+            <input
+              id="header-image"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleChange}
+            />
+
+            {/* SUBIR */}
+            {file && (
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={uploading}
+                className="
+                rounded-xl
+                border border-[#FF7A00]/40
+                bg-[#FF7A00]
+                px-4 py-2.5
+                text-xs
+                font-bold
+                uppercase
+                tracking-wider
+                text-white
+                shadow-[0_0_20px_rgba(255,122,0,0.35)]
+                transition
+                hover:bg-[#FF3030]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+              >
+                {uploading ? "Subiendo..." : "Subir imagen"}
+              </button>
+            )}
+          </div>
+
+          {/* ================================================= */}
+          {/* PREVIEW DE NUEVA IMAGEN */}
+          {/* ================================================= */}
+
+          {preview && (
+            <div className="absolute bottom-5 left-5 z-20 flex max-w-[280px] items-center gap-3 rounded-xl border border-[#FFD21C]/30 bg-black/70 p-2 backdrop-blur-md">
+              <img
+                src={preview}
+                alt="Preview"
+                className="h-12 w-16 rounded-lg object-cover"
+              />
+
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-wider text-[#FFD21C]">
+                  Nueva imagen
+                </p>
+
+                <p className="truncate text-xs text-white">Lista para subir</p>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-[20px] border border-dashed border-white/[0.1] bg-[#0a0a0c]/50">
+        /* ===================================================== */
+        /* SIN IMÁGENES */
+        /* ===================================================== */
+
+        <div className="relative flex h-full w-full items-center justify-center bg-[#0a0a0c]">
           <div className="text-center">
             <p className="text-sm text-zinc-400">
               No hay imágenes en el carrusel
@@ -247,60 +356,85 @@ export default function HeaderCarouselUpload() {
               Selecciona una imagen para comenzar
             </p>
           </div>
-        </div>
-      )}
 
-      {/* ========================================
-          PREVIEW NUEVA IMAGEN
-      ======================================== */}
+          {/* BOTÓN DENTRO DEL CARRUSEL */}
+          <div className="absolute right-5 top-5">
+            <label
+              htmlFor="header-image"
+              className="
+              cursor-pointer
+              rounded-xl
+              border border-white/20
+              bg-black/60
+              px-4 py-2.5
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-white
+              backdrop-blur-md
+              transition
+              hover:border-[#FFD21C]/60
+              hover:bg-[#FFD21C]
+              hover:text-black
+            "
+            >
+              + Seleccionar imagen
+            </label>
 
-      {preview && (
-        <div className="relative h-24 shrink-0 overflow-hidden rounded-xl border border-orange-500/30 shadow-[0_0_20px_rgba(251,146,60,0.15)]">
-          <img
-            src={preview}
-            alt="Preview"
-            className="h-full w-full object-cover"
-          />
-
-          <div className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px]">
-            <span className="rounded-lg border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-medium text-orange-200">
-              Nueva imagen lista para subir
-            </span>
+            <input
+              id="header-image"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleChange}
+            />
           </div>
+
+          {/* PREVIEW + SUBIR */}
+          {preview && (
+            <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-xl border border-[#FFD21C]/30 bg-black/70 p-3 backdrop-blur-md">
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="h-12 w-16 rounded-lg object-cover"
+                />
+
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-[#FFD21C]">
+                    Nueva imagen
+                  </p>
+
+                  <p className="text-xs text-white">Lista para subir</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={uploading}
+                className="
+                rounded-xl
+                bg-[#FF7A00]
+                px-4 py-2.5
+                text-xs
+                font-bold
+                uppercase
+                tracking-wider
+                text-white
+                transition
+                hover:bg-[#FF3030]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+              >
+                {uploading ? "Subiendo..." : "Subir imagen"}
+              </button>
+            </div>
+          )}
         </div>
       )}
-
-      {/* ========================================
-          CONTROLES
-      ======================================== */}
-
-      <div className="flex shrink-0 items-center gap-3">
-        <label
-          htmlFor="header-image"
-          className="cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3 text-sm font-medium text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-300"
-        >
-          Seleccionar imagen
-        </label>
-
-        <input
-          id="header-image"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleChange}
-        />
-
-        {file && (
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={uploading}
-            className="rounded-xl border border-orange-500/30 bg-orange-500/20 px-5 py-3 text-sm font-medium text-orange-200 shadow-[0_0_20px_rgba(251,146,60,0.2)] transition hover:bg-orange-500/30 hover:border-orange-400/60 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {uploading ? "Subiendo..." : "Subir al carrusel"}
-          </button>
-        )}
-      </div>
     </div>
   );
 }

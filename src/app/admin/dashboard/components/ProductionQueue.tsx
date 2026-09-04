@@ -99,31 +99,52 @@ export default function ProductionQueue() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex h-[360px] flex-col">
+      {/* HEADER */}
+      <div className="mb-4 flex shrink-0 items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">
             Cola de producción
           </h2>
+
           <p className="text-xs text-zinc-500">Pedidos próximos a entregar</p>
         </div>
+
         <span className="rounded-full border border-orange-500/30 bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-300 shadow-[0_0_15px_rgba(251,146,60,0.15)]">
           {orders.length}
         </span>
       </div>
+
+      {/* LOADING */}
       {loading && (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex min-h-0 flex-1 items-center justify-center">
           <p className="text-xs text-zinc-500">Cargando pedidos...</p>
         </div>
       )}
 
+      {/* EMPTY */}
       {!loading && orders.length === 0 && (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex min-h-0 flex-1 items-center justify-center">
           <p className="text-xs text-zinc-500">No hay pedidos en producción.</p>
         </div>
       )}
+
+      {/* LISTA */}
       {!loading && orders.length > 0 && (
-        <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+        <div
+          className="
+            min-h-0
+            flex-1
+            space-y-2
+            overflow-y-auto
+            pr-2
+
+            scrollbar-thin
+            scrollbar-track-transparent
+            scrollbar-thumb-zinc-700
+            hover:scrollbar-thumb-zinc-500
+          "
+        >
           {orders.map((order) => {
             const daysUntil = getDaysUntilDelivery(order.delivery_date);
 
@@ -131,20 +152,38 @@ export default function ProductionQueue() {
               <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
-                className="block rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-orange-500/40 hover:bg-orange-500/10"
+                className="
+                  block
+                  rounded-xl
+                  border border-white/[0.08]
+                  bg-white/[0.03]
+                  p-3
+                  transition
+                  hover:border-orange-500/40
+                  hover:bg-orange-500/10
+                "
               >
                 <div className="flex items-center justify-between gap-3">
+                  {/* INFORMACIÓN */}
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-white">
                       {order.services}
                     </p>
+
                     <p className="truncate text-[11px] text-zinc-500">
                       {order.company_name}
                     </p>
                   </div>
+
+                  {/* FECHA */}
                   <div
                     className={`
-                      rounded-lg border px-2.5 py-1 text-right
+                      shrink-0
+                      rounded-lg
+                      border
+                      px-2.5
+                      py-1
+                      text-right
                       ${getPriorityStyle(order.delivery_date)}
                     `}
                   >
@@ -163,6 +202,8 @@ export default function ProductionQueue() {
                     </p>
                   </div>
                 </div>
+
+                {/* ESTADO */}
                 <div className="mt-2">
                   <span className="text-[10px] text-zinc-500">
                     {getStatusLabel(order.status)}

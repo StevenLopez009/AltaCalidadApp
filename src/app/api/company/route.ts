@@ -1,5 +1,6 @@
 import {
   createNewCompany,
+  deleteCompanyById,
   listCompanies,
 } from "@/src/modules/company/services/company.service";
 
@@ -47,6 +48,42 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Error creando empresa" },
       { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+
+    const id = Number(body.id);
+
+    if (!id || Number.isNaN(id)) {
+      return NextResponse.json(
+        {
+          message: "El ID de la empresa es obligatorio",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    await deleteCompanyById(id);
+
+    return NextResponse.json({
+      message: "Empresa eliminada correctamente",
+    });
+  } catch (error) {
+    console.error("Error eliminando empresa:", error);
+
+    return NextResponse.json(
+      {
+        message: "Error eliminando empresa",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }

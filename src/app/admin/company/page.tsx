@@ -5,11 +5,11 @@ export default function CompaniesPage() {
   return (
     <main className="min-h-screen bg-[#0B0914]">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* HEADER */}
-        <div className="mb-8">
+        {/* PAGE HEADER */}
+        <div className="mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-400">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
                 Administración
               </p>
 
@@ -23,14 +23,39 @@ export default function CompaniesPage() {
               </p>
             </div>
 
-            <div className="w-fit rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300">
+            <div
+              className="
+                w-fit
+                rounded-full
+                border
+                border-orange-500/20
+                bg-orange-500/10
+                px-3
+                py-1.5
+                text-xs
+                font-medium
+                text-orange-300
+              "
+            >
               Gestión comercial
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
+        {/* MAIN CONTENT */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            items-stretch
+            gap-5
+            lg:grid-cols-[340px_1fr]
+          "
+        >
+          {/* CREATE COMPANY */}
           <CompanyForm />
+
+          {/* COMPANY LIST */}
           <CompanyList />
         </div>
       </div>

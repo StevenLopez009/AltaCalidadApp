@@ -410,8 +410,7 @@ export default function OrdersOverview() {
       {!loading && filteredOrders.length > 0 && (
         <div
           className="
-            min-h-0
-            flex-1
+            h-[400px]
             overflow-hidden
             rounded-xl
             border border-orange-500/10
@@ -463,7 +462,6 @@ export default function OrdersOverview() {
               <tbody>
                 {filteredOrders.map((order) => {
                   const total = Number(order.total ?? 0);
-
                   const amountPaid = Number(order.amount_paid ?? 0);
 
                   const remaining = Math.max(total - amountPaid, 0);
