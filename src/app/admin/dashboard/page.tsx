@@ -305,7 +305,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* PENDIENTES */}
-              <div className="min-h-[400px] overflow-hidden rounded-2xl bg-[#FF3030] p-5 text-white lg:col-span-4">
+              <div className="min-h-[400px] overflow-hidden rounded-2xl bg-[#171717] p-5 text-white lg:col-span-4">
                 <PendingOrdersChart />
               </div>
             </div>

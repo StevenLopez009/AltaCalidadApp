@@ -11,6 +11,9 @@ import {
   getAllOrders,
 } from "../repositories/orders.repositories";
 import { createNewOrderItem } from "../../order_items/service/orderItems.service";
+import mysql from "mysql2/promise";
+import { db } from "@/src/shared/lib/db";
+import { decreaseMaterialStock } from "../../materials/repositories/materials.repositories";
 
 interface CreateOrderItemData {
   categoryId: number;
@@ -34,9 +37,30 @@ interface CreateNewOrderData {
   items: CreateOrderItemData[];
 }
 
+function calculateMaterialQuantity(
+  unit: string,
+  quantity: number,
+  width: number,
+  height: number,
+) {
+  if (unit === "m2") {
+    return width * height * quantity;
+  }
+
+  if (unit === "metro") {
+    return width * quantity;
+  }
+
+  return quantity;
+}
+
 export async function createNewOrder(data: CreateNewOrderData) {
   let company = null;
   let discountPercentage = 0;
+
+  // ==========================================
+  // 1. VALIDAR CLIENTE
+  // ==========================================
 
   if (data.customerType === "empresa") {
     if (!data.companyId) {
@@ -60,9 +84,19 @@ export async function createNewOrder(data: CreateNewOrderData) {
     if (!data.customerPhone?.trim()) {
       throw new Error("El teléfono del usuario es obligatorio");
     }
+
     discountPercentage = 0;
   }
+
+  // ==========================================
+  // 2. CALCULAR SUBTOTAL
+  // ==========================================
+
   let subtotal = 0;
+
+  // Guardamos los servicios para no consultarlos
+  // nuevamente después.
+  const servicesMap = new Map<number, any>();
 
   for (const item of data.items) {
     const service = await getServiceById(item.serviceId);
@@ -70,6 +104,8 @@ export async function createNewOrder(data: CreateNewOrderData) {
     if (!service) {
       throw new Error(`El servicio con id ${item.serviceId} no existe`);
     }
+
+    servicesMap.set(item.serviceId, service);
 
     const quantity = Number(item.quantity);
 
@@ -106,56 +142,168 @@ export async function createNewOrder(data: CreateNewOrderData) {
 
     subtotal += itemSubtotal;
   }
+
+  // ==========================================
+  // 3. DESCUENTO
+  // ==========================================
+
   const discountAmount = subtotal * (discountPercentage / 100);
+
   const total = subtotal - discountAmount;
 
-  const order = await createOrder({
-    companyId: data.customerType === "empresa" ? data.companyId! : null,
+  // ==========================================
+  // 4. INICIAR TRANSACCIÓN
+  // ==========================================
 
-    customerType: data.customerType,
+  const connection = await db.getConnection();
 
-    customerName:
-      data.customerType === "usuario" ? data.customerName!.trim() : null,
+  try {
+    await connection.beginTransaction();
 
-    customerPhone:
-      data.customerType === "usuario" ? data.customerPhone!.trim() : null,
+    // ========================================
+    // 5. CREAR ORDEN
+    // ========================================
 
-    deliveryDate: data.deliveryDate,
+    const order = await createOrder(connection, {
+      companyId: data.customerType === "empresa" ? data.companyId! : null,
 
-    status: "pendiente",
+      customerType: data.customerType,
 
-    subtotal,
-    discountPercentage,
-    discountAmount,
-    total,
+      customerName:
+        data.customerType === "usuario" ? data.customerName!.trim() : null,
 
-    designFile: null,
-    observations: null,
-  });
+      customerPhone:
+        data.customerType === "usuario" ? data.customerPhone!.trim() : null,
 
-  const orderId = (order as any).insertId;
+      deliveryDate: data.deliveryDate,
 
-  for (const item of data.items) {
-    const service = await getServiceById(item.serviceId);
+      status: "pendiente",
 
-    if (!service) {
-      throw new Error(`El servicio con id ${item.serviceId} no existe`);
+      subtotal,
+
+      discountPercentage,
+
+      discountAmount,
+
+      total,
+
+      designFile: null,
+
+      observations: null,
+    });
+
+    const orderId = (order as mysql.ResultSetHeader).insertId;
+
+    // ========================================
+    // 6. CREAR ITEMS + DESCONTAR MATERIAL
+    // ========================================
+
+    for (const item of data.items) {
+      const service = servicesMap.get(item.serviceId);
+
+      if (!service) {
+        throw new Error(`El servicio ${item.serviceId} no existe`);
+      }
+
+      // --------------------------------------
+      // Crear order_item
+      // --------------------------------------
+
+      await createNewOrderItem(connection, {
+        orderId,
+
+        categoryId: item.categoryId,
+
+        serviceId: item.serviceId,
+
+        quantity: item.quantity,
+
+        width: item.width,
+
+        height: item.height,
+
+        unit: service.unit,
+
+        designFile: item.designFile,
+
+        observations: item.observations,
+      });
+
+      // --------------------------------------
+      // Si el servicio no tiene material,
+      // no hay nada que descontar.
+      // --------------------------------------
+
+      if (!service.material_id) {
+        continue;
+      }
+
+      // --------------------------------------
+      // Calcular cuánto material consumir
+      // --------------------------------------
+
+      const quantity = Number(item.quantity);
+
+      const width = Number(item.width) || 0;
+
+      const height = Number(item.height) || 0;
+
+      const materialQuantity = calculateMaterialQuantity(
+        service.unit,
+        quantity,
+        width,
+        height,
+      );
+
+      if (!Number.isFinite(materialQuantity) || materialQuantity <= 0) {
+        throw new Error(
+          `La cantidad de material para ${service.name} no es válida`,
+        );
+      }
+
+      // --------------------------------------
+      // Descontar stock
+      // --------------------------------------
+
+      const result = await decreaseMaterialStock(
+        connection,
+        service.material_id,
+        materialQuantity,
+      );
+
+      // --------------------------------------
+      // Stock insuficiente
+      // --------------------------------------
+
+      if (result.affectedRows === 0) {
+        throw new Error(
+          `Stock insuficiente para el material del servicio "${service.name}"`,
+        );
+      }
     }
 
-    await createNewOrderItem({
-      orderId,
-      categoryId: item.categoryId,
-      serviceId: item.serviceId,
-      quantity: item.quantity,
-      width: item.width,
-      height: item.height,
-      unit: service.unit,
-      designFile: item.designFile,
-      observations: item.observations,
-    });
-  }
+    // ========================================
+    // 7. CONFIRMAR TODO
+    // ========================================
 
-  return order;
+    await connection.commit();
+
+    return order;
+  } catch (error) {
+    // ========================================
+    // 8. SI ALGO FALLA → DESHACER TODO
+    // ========================================
+
+    await connection.rollback();
+
+    throw error;
+  } finally {
+    // ========================================
+    // 9. LIBERAR CONEXIÓN
+    // ========================================
+
+    connection.release();
+  }
 }
 
 export async function getOrdersCalendar(year: number, month: number) {

@@ -1,6 +1,7 @@
 import { db } from "@/src/shared/lib/db";
 import { CreateMaterialDto } from "@/src/shared/types/CreateMaterialDto";
 import type { Material } from "@/src/shared/types/material";
+import type { PoolConnection } from "mysql2/promise";
 
 export async function createMaterial(data: CreateMaterialDto) {
   const [result] = await db.query(
@@ -67,4 +68,22 @@ export async function getAllMaterials(): Promise<Material[]> {
   );
 
   return rows;
+}
+
+export async function decreaseMaterialStock(
+  connection: PoolConnection,
+  materialId: number,
+  quantity: number,
+) {
+  const [result] = await connection.query(
+    `
+    UPDATE materials
+    SET stock = stock - ?
+    WHERE id = ?
+      AND stock >= ?
+    `,
+    [quantity, materialId, quantity],
+  );
+
+  return result;
 }
