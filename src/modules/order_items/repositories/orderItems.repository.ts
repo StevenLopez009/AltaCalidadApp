@@ -1,4 +1,4 @@
-import { db } from "@/src/shared/lib/db";
+import type { PoolConnection } from "mysql2/promise";
 
 export interface CreateOrderItemData {
   orderId: number;
@@ -12,8 +12,11 @@ export interface CreateOrderItemData {
   observations: string | null;
 }
 
-export async function createOrderItem(data: CreateOrderItemData) {
-  const [result] = await db.query(
+export async function createOrderItem(
+  connection: PoolConnection,
+  data: CreateOrderItemData,
+) {
+  const [result] = await connection.query(
     `
       INSERT INTO order_items
       (

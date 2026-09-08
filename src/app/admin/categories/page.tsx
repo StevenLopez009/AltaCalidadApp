@@ -172,105 +172,6 @@ export default function CategoriesPage() {
             </div>
           </section>
 
-          {/* SERVICE */}
-          <section
-            className={`
-              overflow-hidden
-              rounded-2xl
-              border
-              transition-all
-              duration-300
-              ${
-                openForm === "service"
-                  ? "border-purple-500/30 bg-[#121215] shadow-[0_15px_45px_rgba(168,85,247,0.08)]"
-                  : "border-white/[0.07] bg-[#121215] hover:border-purple-500/20"
-              }
-            `}
-          >
-            <button
-              type="button"
-              onClick={() => toggleForm("service")}
-              className="group flex w-full items-center justify-between px-5 py-4 text-left sm:px-6"
-            >
-              <div className="flex min-w-0 items-center gap-4">
-                <div
-                  className="
-                    flex
-                    h-11
-                    w-11
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-xl
-                    border
-                    border-purple-500/20
-                    bg-purple-500/10
-                    text-purple-400
-                    transition
-                    group-hover:bg-purple-500/15
-                  "
-                >
-                  <ClipboardList className="h-5 w-5" />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="hidden text-[10px] font-bold tracking-widest text-zinc-700 sm:block">
-                    02
-                  </span>
-
-                  <div>
-                    <h2 className="font-semibold text-white">Servicio</h2>
-
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Crear un nuevo servicio
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-lg
-                  border
-                  transition-all
-                  ${
-                    openForm === "service"
-                      ? "rotate-45 border-purple-500/20 bg-purple-500/10 text-purple-400"
-                      : "border-white/[0.06] bg-white/[0.025] text-zinc-500 group-hover:border-purple-500/20 group-hover:text-purple-400"
-                  }
-                `}
-              >
-                <Plus className="h-4 w-4" />
-              </div>
-            </button>
-
-            {/* FORM */}
-            <div
-              className={`
-                grid
-                transition-all
-                duration-300
-                ${
-                  openForm === "service"
-                    ? "grid-rows-[1fr] opacity-100"
-                    : "grid-rows-[0fr] opacity-0"
-                }
-              `}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <div className="border-t border-white/[0.06] p-4 sm:p-6">
-                  <ServiceForm />
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* MATERIAL */}
           <section
             className={`
@@ -314,7 +215,7 @@ export default function CategoriesPage() {
 
                 <div className="flex items-center gap-3">
                   <span className="hidden text-[10px] font-bold tracking-widest text-zinc-700 sm:block">
-                    03
+                    02
                   </span>
 
                   <div>
@@ -365,6 +266,105 @@ export default function CategoriesPage() {
               <div className="min-h-0 overflow-hidden">
                 <div className="border-t border-white/[0.06] p-4 sm:p-6">
                   <MaterialForm />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SERVICE */}
+          <section
+            className={`
+              overflow-hidden
+              rounded-2xl
+              border
+              transition-all
+              duration-300
+              ${
+                openForm === "service"
+                  ? "border-purple-500/30 bg-[#121215] shadow-[0_15px_45px_rgba(168,85,247,0.08)]"
+                  : "border-white/[0.07] bg-[#121215] hover:border-purple-500/20"
+              }
+            `}
+          >
+            <button
+              type="button"
+              onClick={() => toggleForm("service")}
+              className="group flex w-full items-center justify-between px-5 py-4 text-left sm:px-6"
+            >
+              <div className="flex min-w-0 items-center gap-4">
+                <div
+                  className="
+                    flex
+                    h-11
+                    w-11
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-purple-500/20
+                    bg-purple-500/10
+                    text-purple-400
+                    transition
+                    group-hover:bg-purple-500/15
+                  "
+                >
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="hidden text-[10px] font-bold tracking-widest text-zinc-700 sm:block">
+                    03
+                  </span>
+
+                  <div>
+                    <h2 className="font-semibold text-white">Servicio</h2>
+
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      Crear un nuevo servicio
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  border
+                  transition-all
+                  ${
+                    openForm === "service"
+                      ? "rotate-45 border-purple-500/20 bg-purple-500/10 text-purple-400"
+                      : "border-white/[0.06] bg-white/[0.025] text-zinc-500 group-hover:border-purple-500/20 group-hover:text-purple-400"
+                  }
+                `}
+              >
+                <Plus className="h-4 w-4" />
+              </div>
+            </button>
+
+            {/* FORM */}
+            <div
+              className={`
+                grid
+                transition-all
+                duration-300
+                ${
+                  openForm === "service"
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0"
+                }
+              `}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div className="border-t border-white/[0.06] p-4 sm:p-6">
+                  <ServiceForm />
                 </div>
               </div>
             </div>
