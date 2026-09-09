@@ -85,7 +85,6 @@ export function CarruselSection() {
             effect="fade"
             fadeEffect={{ crossFade: true }}
             loop={slides.length > 1}
-            loopedSlides={slides.length}
             speed={900}
             autoplay={{
               delay: 6000,
