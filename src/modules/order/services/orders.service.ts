@@ -5,6 +5,7 @@ import {
   getOrderDetailsById,
   getOrdersByMonth,
   getProductionQueue,
+  getOrdersByDeliveryDate,
   updateOrderStatus,
   updateOrderPaymentStatus,
   updateOrderPayment,
@@ -14,6 +15,20 @@ import { createNewOrderItem } from "../../order_items/service/orderItems.service
 import mysql from "mysql2/promise";
 import { db } from "@/src/shared/lib/db";
 import { decreaseMaterialStock } from "../../materials/repositories/materials.repositories";
+import {
+  createPayment,
+  type PaymentMethod,
+} from "../../finance/repositories/finance.repositories";
+import {
+  createOrderItemAddon,
+  getAddonsByService,
+  getAddonsForOrder,
+} from "../../services/repositories/addons.repositories";
+
+interface CreateOrderItemAddon {
+  addonId: number;
+  quantity: number;
+}
 
 interface CreateOrderItemData {
   categoryId: number;
@@ -24,6 +39,7 @@ interface CreateOrderItemData {
   unit: string | null;
   designFile: string | null;
   observations: string | null;
+  addons?: CreateOrderItemAddon[];
 }
 
 type CustomerType = "empresa" | "usuario";
@@ -35,6 +51,28 @@ interface CreateNewOrderData {
   customerPhone?: string | null;
   deliveryDate: string;
   items: CreateOrderItemData[];
+  payment?: {
+    amount: number;
+    method: PaymentMethod;
+  } | null;
+}
+
+function calculateItemSubtotal(
+  unit: string,
+  quantity: number,
+  width: number,
+  height: number,
+  price: number,
+) {
+  if (unit === "m2") {
+    return width * height * quantity * price;
+  }
+
+  if (unit === "metro") {
+    return width * quantity * price;
+  }
+
+  return quantity * price;
 }
 
 function calculateMaterialQuantity(
@@ -42,16 +80,18 @@ function calculateMaterialQuantity(
   quantity: number,
   width: number,
   height: number,
+  usagePerUnit: number,
 ) {
-  if (unit === "m2") {
-    return width * height * quantity;
-  }
+  const billed =
+    unit === "m2"
+      ? width * height * quantity
+      : unit === "metro"
+        ? width * quantity
+        : quantity;
 
-  if (unit === "metro") {
-    return width * quantity;
-  }
-
-  return quantity;
+  // material_usage traduce lo cobrado a lo que realmente se gasta: un servicio
+  // vendido por unidad puede consumir una fracción de un material en m2.
+  return billed * usagePerUnit;
 }
 
 export async function createNewOrder(data: CreateNewOrderData) {
@@ -98,6 +138,9 @@ export async function createNewOrder(data: CreateNewOrderData) {
   // nuevamente después.
   const servicesMap = new Map<number, any>();
 
+  // Guarda los adicionales válidos por servicio para no reconsultarlos.
+  const addonsMap = new Map<number, { id: number; name: string; price: number }[]>();
+
   for (const item of data.items) {
     const service = await getServiceById(item.serviceId);
 
@@ -122,25 +165,48 @@ export async function createNewOrder(data: CreateNewOrderData) {
     const width = Number(item.width) || 0;
     const height = Number(item.height) || 0;
 
-    let itemSubtotal = 0;
-
-    if (service.unit === "m2") {
-      if (width <= 0 || height <= 0) {
-        throw new Error(`El servicio ${service.name} requiere base y altura`);
-      }
-
-      itemSubtotal = width * height * quantity * price;
-    } else if (service.unit === "metro") {
-      if (width <= 0) {
-        throw new Error(`El servicio ${service.name} requiere una medida`);
-      }
-
-      itemSubtotal = width * quantity * price;
-    } else {
-      itemSubtotal = quantity * price;
+    if (service.unit === "m2" && (width <= 0 || height <= 0)) {
+      throw new Error(`El servicio ${service.name} requiere base y altura`);
     }
 
-    subtotal += itemSubtotal;
+    if (service.unit === "metro" && width <= 0) {
+      throw new Error(`El servicio ${service.name} requiere una medida`);
+    }
+
+    subtotal += calculateItemSubtotal(
+      service.unit,
+      quantity,
+      width,
+      height,
+      price,
+    );
+
+    // Los adicionales se cobran aparte del precio base del servicio.
+    if (item.addons?.length) {
+      const available = await getAddonsByService(item.serviceId);
+
+      addonsMap.set(item.serviceId, available);
+
+      for (const chosen of item.addons) {
+        const addon = available.find(
+          (option) => option.id === Number(chosen.addonId),
+        );
+
+        if (!addon) {
+          throw new Error(
+            `El adicional seleccionado no pertenece a ${service.name}`,
+          );
+        }
+
+        const addonQuantity = Number(chosen.quantity);
+
+        if (!Number.isFinite(addonQuantity) || addonQuantity <= 0) {
+          throw new Error(`La cantidad de "${addon.name}" debe ser mayor a cero`);
+        }
+
+        subtotal += (Number(addon.price) || 0) * addonQuantity;
+      }
+    }
   }
 
   // ==========================================
@@ -209,7 +275,28 @@ export async function createNewOrder(data: CreateNewOrderData) {
       // Crear order_item
       // --------------------------------------
 
-      await createNewOrderItem(connection, {
+      const chosenAddons = (item.addons ?? []).map((chosen) => {
+        const addon = (addonsMap.get(item.serviceId) ?? []).find(
+          (option) => option.id === Number(chosen.addonId),
+        )!;
+
+        const addonQuantity = Number(chosen.quantity);
+
+        return {
+          addonId: addon.id,
+          name: addon.name,
+          unitPrice: Number(addon.price) || 0,
+          quantity: addonQuantity,
+          subtotal: (Number(addon.price) || 0) * addonQuantity,
+        };
+      });
+
+      const addonsTotal = chosenAddons.reduce(
+        (total, addon) => total + addon.subtotal,
+        0,
+      );
+
+      const itemResult = await createNewOrderItem(connection, {
         orderId,
 
         categoryId: item.categoryId,
@@ -224,10 +311,35 @@ export async function createNewOrder(data: CreateNewOrderData) {
 
         unit: service.unit,
 
+        unitPrice: Number(service.price) || 0,
+
+        // El renglón cobra el servicio más sus adicionales.
+        subtotal:
+          calculateItemSubtotal(
+            service.unit,
+            Number(item.quantity),
+            Number(item.width) || 0,
+            Number(item.height) || 0,
+            Number(service.price) || 0,
+          ) + addonsTotal,
+
         designFile: item.designFile,
 
         observations: item.observations,
       });
+
+      const orderItemId = (itemResult as mysql.ResultSetHeader).insertId;
+
+      for (const addon of chosenAddons) {
+        await createOrderItemAddon(connection, {
+          orderItemId,
+          addonId: addon.addonId,
+          name: addon.name,
+          unitPrice: addon.unitPrice,
+          quantity: addon.quantity,
+          subtotal: addon.subtotal,
+        });
+      }
 
       // --------------------------------------
       // Si el servicio no tiene material,
@@ -253,6 +365,7 @@ export async function createNewOrder(data: CreateNewOrderData) {
         quantity,
         width,
         height,
+        Number(service.material_usage) || 1,
       );
 
       if (!Number.isFinite(materialQuantity) || materialQuantity <= 0) {
@@ -283,7 +396,32 @@ export async function createNewOrder(data: CreateNewOrderData) {
     }
 
     // ========================================
-    // 7. CONFIRMAR TODO
+    // 7. ABONO INICIAL
+    // ========================================
+
+    if (data.payment) {
+      const amount = Number(data.payment.amount);
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error("El monto del pago debe ser mayor a cero");
+      }
+
+      if (amount > total) {
+        throw new Error("El pago no puede ser mayor al total del pedido");
+      }
+
+      // Deja amount_paid y payment_status coherentes con el abono registrado.
+      await updateOrderPayment(connection, orderId, amount);
+
+      await createPayment(connection, {
+        orderId,
+        amount,
+        paymentMethod: data.payment.method,
+      });
+    }
+
+    // ========================================
+    // 8. CONFIRMAR TODO
     // ========================================
 
     await connection.commit();
@@ -314,6 +452,10 @@ export async function getProductionOrders() {
   return await getProductionQueue();
 }
 
+export async function getOrdersForDeliveryDate(date: string) {
+  return await getOrdersByDeliveryDate(date);
+}
+
 export async function getAllOrdersData() {
   return await getAllOrders();
 }
@@ -324,6 +466,8 @@ export async function getOrderDetails(id: number) {
   if (!rows || rows.length === 0) {
     return null;
   }
+
+  const addons = await getAddonsForOrder(id);
 
   const firstRow = rows[0] as any;
 
@@ -359,6 +503,16 @@ export async function getOrderDetails(id: number) {
         subtotal: row.item_subtotal,
         designFile: row.item_design_file,
         observations: row.item_observations,
+
+        addons: addons
+          .filter((addon) => addon.order_item_id === row.item_id)
+          .map((addon) => ({
+            id: addon.id,
+            name: addon.name,
+            unitPrice: Number(addon.unit_price) || 0,
+            quantity: Number(addon.quantity) || 0,
+            subtotal: Number(addon.subtotal) || 0,
+          })),
       })),
   };
 }
@@ -382,7 +536,11 @@ export async function changeOrderPaymentStatus(
   return await updateOrderPaymentStatus(id, paymentStatus);
 }
 
-export async function changeOrderPayment(id: number, amountPaid: number) {
+export async function changeOrderPayment(
+  id: number,
+  amountPaid: number,
+  paymentMethod: PaymentMethod = "efectivo",
+) {
   // ========================================================
   // OBTENER PEDIDO
   // ========================================================
@@ -429,10 +587,30 @@ export async function changeOrderPayment(id: number, amountPaid: number) {
   }
 
   // ========================================================
-  // ACTUALIZAR PAGO
+  // ACTUALIZAR PAGO + REGISTRAR MOVIMIENTO
   // ========================================================
 
-  await updateOrderPayment(id, amountPaid);
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    await updateOrderPayment(connection, id, amountPaid);
+
+    await createPayment(connection, {
+      orderId: id,
+      amount: amountPaid,
+      paymentMethod,
+    });
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+
+    throw error;
+  } finally {
+    connection.release();
+  }
 
   // ========================================================
   // OBTENER PEDIDO ACTUALIZADO

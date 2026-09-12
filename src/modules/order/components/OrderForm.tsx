@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
   CalendarDays,
   Check,
   ChevronRight,
+  Copy,
   Minus,
   Package,
   Plus,
@@ -37,7 +38,19 @@ interface Service {
   price: number;
 }
 
+interface Addon {
+  id: number;
+  service_id: number;
+  name: string;
+  price: number;
+}
+
+/** Adicionales elegidos en una línea: id del adicional y cuántos van. */
+type SelectedAddons = Record<number, number>;
+
 interface OrderItemForm {
+  /** Identifica la línea, no el servicio: el mismo servicio puede repetirse. */
+  uid: number;
   categoryId: string;
   serviceId: string;
   quantity: string;
@@ -45,14 +58,20 @@ interface OrderItemForm {
   height: string;
   designFile: File | null;
   observations: string;
+  addons: SelectedAddons;
 }
 
 type CustomerType = "empresa" | "usuario";
+
+type PaymentOption = "ninguno" | "total" | "parcial";
+
+type PaymentMethod = "efectivo" | "digital";
 
 export default function OrderForm() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [addons, setAddons] = useState<Addon[]>([]);
   const [customerType, setCustomerType] = useState<CustomerType>("empresa");
   const [companyId, setCompanyId] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -64,6 +83,12 @@ export default function OrderForm() {
   const [configuringIndex, setConfiguringIndex] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [paymentOption, setPaymentOption] = useState<PaymentOption>("ninguno");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+
+  const nextUid = useRef(1);
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -73,6 +98,12 @@ export default function OrderForm() {
             fetch("/api/categories"),
             fetch("/api/services"),
           ]);
+
+        const addonsResponse = await fetch("/api/services/addons");
+
+        if (addonsResponse.ok) {
+          setAddons(await addonsResponse.json());
+        }
 
         if (!companiesResponse.ok) {
           throw new Error("Error cargando empresas");
@@ -118,19 +149,13 @@ export default function OrderForm() {
     return services.find((service) => service.id === Number(item.serviceId));
   }
 
+  // Un mismo servicio puede ir varias veces con medidas distintas, así que
+  // cada clic agrega una línea nueva en lugar de reutilizar la existente.
   function addItem(service: Service) {
-    const existingIndex = items.findIndex(
-      (item) => Number(item.serviceId) === service.id,
-    );
-
-    if (existingIndex !== -1) {
-      setConfiguringIndex(existingIndex);
-      return;
-    }
-
     setItems((currentItems) => [
       ...currentItems,
       {
+        uid: nextUid.current++,
         categoryId: String(service.category_id),
         serviceId: String(service.id),
         quantity: "1",
@@ -138,8 +163,25 @@ export default function OrderForm() {
         height: "",
         designFile: null,
         observations: "",
+        addons: {},
       },
     ]);
+  }
+
+  function duplicateItem(index: number) {
+    setItems((currentItems) => {
+      const original = currentItems[index];
+
+      const copy = { ...original, uid: nextUid.current++ };
+
+      return [
+        ...currentItems.slice(0, index + 1),
+        copy,
+        ...currentItems.slice(index + 1),
+      ];
+    });
+
+    setConfiguringIndex(index + 1);
   }
 
   function updateItem(
@@ -235,16 +277,59 @@ export default function OrderForm() {
 
     const price = Number(service.price) || 0;
 
-    switch (service.unit) {
-      case "m2":
-        return width * height * quantity * price;
+    const base =
+      service.unit === "m2"
+        ? width * height * quantity * price
+        : service.unit === "metro"
+          ? width * quantity * price
+          : quantity * price;
 
-      case "metro":
-        return width * quantity * price;
+    return base + calculateAddonsSubtotal(item);
+  }
 
-      default:
-        return quantity * price;
-    }
+  /** Adicionales del servicio, disponibles para elegir en cada línea. */
+  function getAddonsForService(serviceId: string) {
+    return addons.filter((addon) => addon.service_id === Number(serviceId));
+  }
+
+  function calculateAddonsSubtotal(item: OrderItemForm) {
+    return Object.entries(item.addons ?? {}).reduce((total, [id, qty]) => {
+      const addon = addons.find((option) => option.id === Number(id));
+
+      return total + (Number(addon?.price) || 0) * (Number(qty) || 0);
+    }, 0);
+  }
+
+  function toggleAddon(index: number, addonId: number) {
+    setItems((currentItems) =>
+      currentItems.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        const next = { ...item.addons };
+
+        if (next[addonId]) {
+          delete next[addonId];
+        } else {
+          // Por defecto se cobra uno por cada unidad pedida del servicio.
+          next[addonId] = Number(item.quantity) || 1;
+        }
+
+        return { ...item, addons: next };
+      }),
+    );
+  }
+
+  function setAddonQuantity(index: number, addonId: number, value: string) {
+    setItems((currentItems) =>
+      currentItems.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        return {
+          ...item,
+          addons: { ...item.addons, [addonId]: Math.max(Number(value) || 0, 0) },
+        };
+      }),
+    );
   }
 
   // ============================================================
@@ -256,7 +341,7 @@ export default function OrderForm() {
       (total, item) => total + calculateItemSubtotal(item),
       0,
     );
-  }, [items, services]);
+  }, [items, services, addons]);
 
   // ============================================================
   // DESCUENTO
@@ -269,6 +354,19 @@ export default function OrderForm() {
   // ============================================================
 
   const total = subtotal - discountAmount;
+
+  // ============================================================
+  // PAGO
+  // ============================================================
+
+  const paidAmount =
+    paymentOption === "total"
+      ? total
+      : paymentOption === "parcial"
+        ? Number(paymentAmount) || 0
+        : 0;
+
+  const amountDue = Math.max(total - paidAmount, 0);
 
   // ============================================================
   // FORMATO MONEDA
@@ -293,7 +391,9 @@ export default function OrderForm() {
       return false;
     }
 
-    for (const item of items) {
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index];
+
       const service = getSelectedService(item);
 
       if (!service) {
@@ -331,11 +431,7 @@ export default function OrderForm() {
             `Debe ingresar una base y una altura válidas para ${service.name}.`,
           );
 
-          setConfiguringIndex(
-            items.findIndex(
-              (currentItem) => currentItem.serviceId === item.serviceId,
-            ),
-          );
+          setConfiguringIndex(index);
 
           return false;
         }
@@ -351,11 +447,7 @@ export default function OrderForm() {
         if (!item.width || !Number.isFinite(width) || width <= 0) {
           alert(`Debe ingresar una longitud válida para ${service.name}.`);
 
-          setConfiguringIndex(
-            items.findIndex(
-              (currentItem) => currentItem.serviceId === item.serviceId,
-            ),
-          );
+          setConfiguringIndex(index);
 
           return false;
         }
@@ -430,6 +522,24 @@ export default function OrderForm() {
       return;
     }
 
+    // ----------------------------------------------------------
+    // PAGO
+    // ----------------------------------------------------------
+
+    if (paymentOption === "parcial") {
+      if (!Number.isFinite(paidAmount) || paidAmount <= 0) {
+        alert("Ingrese el monto abonado.");
+
+        return;
+      }
+
+      if (paidAmount > total) {
+        alert("El abono no puede ser mayor al total del pedido.");
+
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
 
@@ -454,6 +564,13 @@ export default function OrderForm() {
           unit: service?.unit ?? null,
 
           observations: item.observations.trim() || null,
+
+          addons: Object.entries(item.addons ?? {})
+            .filter(([, quantity]) => Number(quantity) > 0)
+            .map(([addonId, quantity]) => ({
+              addonId: Number(addonId),
+              quantity: Number(quantity),
+            })),
         };
       });
 
@@ -488,6 +605,13 @@ export default function OrderForm() {
       formData.append("total", String(total));
 
       formData.append("items", JSON.stringify(orderItems));
+
+      // Pago
+      if (paidAmount > 0) {
+        formData.append("paymentAmount", String(paidAmount));
+
+        formData.append("paymentMethod", paymentMethod);
+      }
 
       // --------------------------------------------------------
       // ARCHIVOS
@@ -552,6 +676,12 @@ export default function OrderForm() {
     setItems([]);
 
     setConfiguringIndex(null);
+
+    setPaymentOption("ninguno");
+
+    setPaymentAmount("");
+
+    setPaymentMethod("efectivo");
   }
 
   // ============================================================
@@ -576,7 +706,7 @@ export default function OrderForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative min-h-screen overflow-hidden bg-[#0b0b10] px-3 py-4 text-white sm:px-5 sm:py-6 lg:px-8"
+      className="relative overflow-hidden text-white"
     >
       {/* =========================================================
         FONDO DECORATIVO
@@ -902,9 +1032,11 @@ export default function OrderForm() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredServices.map((service) => {
-                    const alreadyAdded = items.some(
+                    const addedCount = items.filter(
                       (item) => Number(item.serviceId) === service.id,
-                    );
+                    ).length;
+
+                    const alreadyAdded = addedCount > 0;
 
                     const category = categories.find(
                       (currentCategory) =>
@@ -928,8 +1060,14 @@ export default function OrderForm() {
                           </div>
 
                           {alreadyAdded && (
-                            <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-green-400/30 bg-green-400/10 text-green-300 shadow-[0_0_15px_rgba(74,222,128,0.15)]">
-                              <Check size={14} />
+                            <div
+                              className="absolute right-3 top-3 flex h-7 min-w-7 items-center justify-center gap-1 rounded-full border border-green-400/30 bg-green-400/10 px-2 text-[11px] font-black text-green-300 shadow-[0_0_15px_rgba(74,222,128,0.15)]"
+                              title={`En el pedido ${addedCount} ${
+                                addedCount === 1 ? "vez" : "veces"
+                              }`}
+                            >
+                              <Check size={13} />
+                              {addedCount}
                             </div>
                           )}
                         </div>
@@ -961,23 +1099,10 @@ export default function OrderForm() {
                             <button
                               type="button"
                               onClick={() => addItem(service)}
-                              className={
-                                alreadyAdded
-                                  ? "flex shrink-0 items-center gap-1.5 rounded-xl border border-green-400/30 bg-green-400/10 px-3 py-2.5 text-[11px] font-bold text-green-300 transition hover:bg-green-400/20"
-                                  : "flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 px-3 py-2.5 text-[11px] font-black text-black shadow-[0_0_20px_rgba(255,122,0,0.18)] transition hover:scale-105 hover:shadow-[0_0_30px_rgba(255,87,34,0.35)]"
-                              }
+                              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 px-3 py-2.5 text-[11px] font-black text-black shadow-[0_0_20px_rgba(255,122,0,0.18)] transition hover:scale-105 hover:shadow-[0_0_30px_rgba(255,87,34,0.35)]"
                             >
-                              {alreadyAdded ? (
-                                <>
-                                  <Check size={14} />
-                                  Ver
-                                </>
-                              ) : (
-                                <>
-                                  <Plus size={14} />
-                                  Agregar
-                                </>
-                              )}
+                              <Plus size={14} />
+                              {alreadyAdded ? "Agregar otro" : "Agregar"}
                             </button>
                           </div>
                         </div>
@@ -1054,9 +1179,13 @@ export default function OrderForm() {
 
                     const requiresLength = service.unit === "metro";
 
+                    const missingMeasurements =
+                      (requiresDimensions && (!item.width || !item.height)) ||
+                      (requiresLength && !item.width);
+
                     return (
                       <div
-                        key={`${item.serviceId}-${index}`}
+                        key={item.uid}
                         className="p-4 transition hover:bg-orange-500/[0.02] sm:p-5"
                       >
                         <div className="flex gap-3">
@@ -1081,14 +1210,25 @@ export default function OrderForm() {
                                 </p>
                               </div>
 
-                              <button
-                                type="button"
-                                onClick={() => removeItem(index)}
-                                className="shrink-0 rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400"
-                                title="Eliminar servicio"
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                              <div className="flex shrink-0 items-center gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => duplicateItem(index)}
+                                  className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-yellow-400/10 hover:text-yellow-300"
+                                  title="Duplicar con otras medidas"
+                                >
+                                  <Copy size={15} />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(index)}
+                                  className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400"
+                                  title="Eliminar servicio"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
                             </div>
 
                             {/* CANTIDAD */}
@@ -1124,6 +1264,12 @@ export default function OrderForm() {
                             {/* MEDIDAS */}
 
                             <div className="mt-3 flex flex-wrap gap-2">
+                              {missingMeasurements && (
+                                <span className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-300">
+                                  Faltan medidas
+                                </span>
+                              )}
+
                               {requiresDimensions &&
                                 item.width &&
                                 item.height && (
@@ -1142,6 +1288,25 @@ export default function OrderForm() {
                                 <span className="max-w-[150px] truncate rounded-lg border border-yellow-400/10 bg-yellow-400/[0.05] px-2 py-1 text-[10px] text-yellow-200">
                                   📎 {item.designFile.name}
                                 </span>
+                              )}
+
+                              {Object.entries(item.addons ?? {}).map(
+                                ([addonId, addonQuantity]) => {
+                                  const addon = addons.find(
+                                    (option) => option.id === Number(addonId),
+                                  );
+
+                                  if (!addon) return null;
+
+                                  return (
+                                    <span
+                                      key={addonId}
+                                      className="rounded-lg border border-yellow-400/20 bg-yellow-400/[0.07] px-2 py-1 text-[10px] text-yellow-200"
+                                    >
+                                      +{addon.name} ×{addonQuantity}
+                                    </span>
+                                  );
+                                },
                               )}
                             </div>
 
@@ -1198,6 +1363,96 @@ export default function OrderForm() {
                         {formatCurrency(total)}
                       </span>
                     </div>
+                  </div>
+
+                  {/* PAGO */}
+
+                  <div className="mt-5 border-t border-orange-500/10 pt-5">
+                    <p className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-yellow-300">
+                      Pago
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(
+                        [
+                          { value: "ninguno", label: "Sin pago" },
+                          { value: "total", label: "Paga todo" },
+                          { value: "parcial", label: "Parcial" },
+                        ] as const
+                      ).map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setPaymentOption(option.value)}
+                          className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold transition ${
+                            paymentOption === option.value
+                              ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+                              : "border-orange-500/10 bg-black/20 text-zinc-500 hover:text-zinc-300"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {paymentOption !== "ninguno" && (
+                      <div className="mt-3 space-y-3">
+                        {paymentOption === "parcial" && (
+                          <div>
+                            <label className="mb-1.5 block text-[11px] text-zinc-500">
+                              Monto abonado
+                            </label>
+
+                            <input
+                              type="number"
+                              min="0"
+                              max={total}
+                              step="any"
+                              value={paymentAmount}
+                              onChange={(e) => setPaymentAmount(e.target.value)}
+                              placeholder="0"
+                              className="w-full rounded-xl border border-orange-500/15 bg-black/30 px-3 py-2.5 text-sm font-bold text-white outline-none transition focus:border-orange-400/50"
+                            />
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(
+                            [
+                              { value: "efectivo", label: "Efectivo" },
+                              { value: "digital", label: "Digital" },
+                            ] as const
+                          ).map((method) => (
+                            <button
+                              key={method.value}
+                              type="button"
+                              onClick={() => setPaymentMethod(method.value)}
+                              className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold transition ${
+                                paymentMethod === method.value
+                                  ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+                                  : "border-orange-500/10 bg-black/20 text-zinc-500 hover:text-zinc-300"
+                              }`}
+                            >
+                              {method.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex justify-between rounded-xl bg-black/25 px-3 py-2.5 text-xs">
+                          <span className="text-zinc-500">Queda debiendo</span>
+
+                          <span
+                            className={
+                              amountDue > 0
+                                ? "font-black text-orange-300"
+                                : "font-black text-green-400"
+                            }
+                          >
+                            {formatCurrency(amountDue)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* CREAR */}
@@ -1494,6 +1749,92 @@ export default function OrderForm() {
                   />
                 </div>
 
+                {/* ADICIONALES */}
+
+                {getAddonsForService(configuringItem.serviceId).length > 0 && (
+                  <div className="mt-5">
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-yellow-300">
+                      Adicionales
+                    </p>
+
+                    <div className="space-y-2">
+                      {getAddonsForService(configuringItem.serviceId).map(
+                        (addon) => {
+                          const selected = Boolean(
+                            configuringItem.addons?.[addon.id],
+                          );
+
+                          return (
+                            <div
+                              key={addon.id}
+                              className={`flex flex-wrap items-center gap-2 rounded-xl border p-2.5 transition ${
+                                selected
+                                  ? "border-orange-400/40 bg-orange-500/10"
+                                  : "border-white/[0.07] bg-black/25"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleAddon(configuringIndex, addon.id)
+                                }
+                                className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                              >
+                                <span
+                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                                    selected
+                                      ? "border-orange-400 bg-orange-500 text-white"
+                                      : "border-white/20"
+                                  }`}
+                                >
+                                  {selected && <Check size={13} />}
+                                </span>
+
+                                <span className="min-w-0">
+                                  <span className="block truncate text-xs font-semibold text-white">
+                                    {addon.name}
+                                  </span>
+
+                                  <span className="block text-[10px] text-zinc-500">
+                                    {formatCurrency(Number(addon.price))} c/u
+                                  </span>
+                                </span>
+                              </button>
+
+                              {selected && (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={configuringItem.addons[addon.id]}
+                                    onChange={(e) =>
+                                      setAddonQuantity(
+                                        configuringIndex,
+                                        addon.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-16 rounded-lg border border-orange-500/20 bg-black/40 px-2 py-1.5 text-center text-xs font-bold text-white outline-none focus:border-orange-400/50"
+                                  />
+
+                                  <span className="w-24 text-right text-xs font-bold text-orange-300">
+                                    {formatCurrency(
+                                      Number(addon.price) *
+                                        Number(
+                                          configuringItem.addons[addon.id],
+                                        ),
+                                    )}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* SUBTOTAL */}
 
                 <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-orange-400/20 bg-gradient-to-r from-yellow-400/[0.06] via-orange-500/[0.08] to-red-500/[0.05] p-4 shadow-[0_0_30px_rgba(255,122,0,0.08)]">
@@ -1505,6 +1846,16 @@ export default function OrderForm() {
                     <p className="mt-1 bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-2xl font-black text-transparent">
                       {formatCurrency(configuringSubtotal)}
                     </p>
+
+                    {calculateAddonsSubtotal(configuringItem) > 0 && (
+                      <p className="mt-1 text-[10px] text-zinc-500">
+                        Incluye{" "}
+                        {formatCurrency(
+                          calculateAddonsSubtotal(configuringItem),
+                        )}{" "}
+                        en adicionales
+                      </p>
+                    )}
                   </div>
 
                   <Check size={22} className="shrink-0 text-yellow-300" />

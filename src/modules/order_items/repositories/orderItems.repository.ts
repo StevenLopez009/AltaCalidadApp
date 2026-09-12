@@ -8,6 +8,8 @@ export interface CreateOrderItemData {
   width: number | null;
   height: number | null;
   unit: string | null;
+  unitPrice: number;
+  subtotal: number;
   designFile: string | null;
   observations: string | null;
 }
@@ -27,10 +29,12 @@ export async function createOrderItem(
         width,
         height,
         unit,
+        unit_price,
+        subtotal,
         design_file,
         observations
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       data.orderId,
@@ -40,6 +44,8 @@ export async function createOrderItem(
       data.width,
       data.height,
       data.unit,
+      data.unitPrice,
+      data.subtotal,
       data.designFile,
       data.observations,
     ],

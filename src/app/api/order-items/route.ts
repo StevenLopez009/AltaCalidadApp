@@ -1,4 +1,5 @@
-import { createNewOrderItem } from "@/src/modules/order_items/services/orderItems.service";
+import { createNewOrderItem } from "@/src/modules/order_items/service/orderItems.service";
+import { db } from "@/src/shared/lib/db";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -15,6 +16,8 @@ export async function POST(request: Request) {
       unit,
       unitPrice,
       subtotal,
+      designFile,
+      observations,
     } = body;
 
     if (!orderId) {
@@ -45,21 +48,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const orderItem = await createNewOrderItem({
-      orderId: Number(orderId),
-      categoryId: Number(categoryId),
-      serviceId: Number(serviceId),
-      quantity: Number(quantity),
-      width: width ? Number(width) : null,
-      height: height ? Number(height) : null,
-      unit,
-      unitPrice: Number(unitPrice),
-      subtotal: Number(subtotal),
-    });
+    const connection = await db.getConnection();
 
-    return NextResponse.json(orderItem, {
-      status: 201,
-    });
+    try {
+      const orderItem = await createNewOrderItem(connection, {
+        orderId: Number(orderId),
+        categoryId: Number(categoryId),
+        serviceId: Number(serviceId),
+        quantity: Number(quantity),
+        width: width ? Number(width) : null,
+        height: height ? Number(height) : null,
+        unit: unit ?? null,
+        unitPrice: Number(unitPrice) || 0,
+        subtotal: Number(subtotal) || 0,
+        designFile: designFile ?? null,
+        observations: observations ?? null,
+      });
+
+      return NextResponse.json(orderItem, {
+        status: 201,
+      });
+    } finally {
+      connection.release();
+    }
   } catch (error) {
     console.error("Error creando order item:", error);
 
