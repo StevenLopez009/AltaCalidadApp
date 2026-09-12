@@ -14,6 +14,15 @@ import Image from "next/image";
 
 const icons = [Palette, Printer, Megaphone, ShoppingBag, Globe, Camera];
 
+// Alturas alternadas para el mosaico de movil: sin ellas las dos columnas
+// quedan parejas y se pierde el efecto escalonado.
+const MOBILE_RATIOS = [
+  "aspect-[3/4]",
+  "aspect-[1/1]",
+  "aspect-[4/5]",
+  "aspect-[5/7]",
+];
+
 export async function ServicesSection() {
   const categories = await listCategories();
   return (
@@ -27,20 +36,36 @@ export async function ServicesSection() {
           </h2>
         </div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 sm:mt-16">
-          {categories.map((category) => (
+        {/* En movil es un mosaico de dos columnas; desde sm vuelve a la
+            cuadricula pareja, donde el multicolumna deja de aplicar. */}
+        <div
+          className="
+            mt-10 columns-2 gap-3
+            sm:mt-16 sm:grid sm:grid-cols-2 sm:gap-6
+            lg:grid-cols-3 xl:grid-cols-4
+          "
+        >
+          {categories.map((category, index) => (
             <Link
               key={category.id}
               href={`/servicios/${category.slug}`}
-              className="group relative overflow-hidden rounded-xl"
+              className="
+                group relative mb-3 block break-inside-avoid
+                overflow-hidden rounded-xl
+                sm:mb-0
+              "
             >
-              <div className="relative aspect-[3/4] w-full bg-white/[0.04]">
+              <div
+                className={`relative w-full bg-white/[0.04] sm:aspect-[3/4] ${
+                  MOBILE_RATIOS[index % MOBILE_RATIOS.length]
+                }`}
+              >
                 {category.image ? (
                   <Image
                     src={category.image}
                     alt={category.name}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 25vw"
                     className="object-cover transition duration-500 group-hover:scale-105"
                   />
                 ) : (
@@ -53,8 +78,8 @@ export async function ServicesSection() {
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition duration-300 group-hover:from-black/90" />
 
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <h3 className="text-2xl font-bold text-white">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                <h3 className="text-lg font-bold leading-tight text-white sm:text-2xl">
                   {category.name}
                 </h3>
               </div>
