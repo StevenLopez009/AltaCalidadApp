@@ -35,7 +35,17 @@ const fallbackSlides: CarouselImage[] = [
   },
 ];
 
-export function CarruselSection() {
+interface CarruselSectionProps {
+  /** Título editable desde el panel; una línea por renglón. */
+  heroTitle: string;
+}
+
+export function CarruselSection({ heroTitle }: CarruselSectionProps) {
+  const titleLines = heroTitle
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
   const [slides, setSlides] = useState<CarouselImage[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -108,18 +118,20 @@ export function CarruselSection() {
                       fill
                       priority={index === 0}
                       sizes="(max-width: 768px) 100vw, 68vw"
-                      className="object-contain object-right animate-fade-in"
+                      className="object-cover animate-fade-in md:object-contain md:object-right"
                     />
                   </div>
 
-                  {/* DEGRADADO NEGRO PRINCIPAL */}
-                  <div className="absolute inset-0 z-10 bg-gradient-to-r from-black via-black/90 via-35% to-transparent" />
+                  {/* DEGRADADO NEGRO PRINCIPAL
+                      En móvil el texto va sobre la imagen, así que el velo sube
+                      desde abajo; en escritorio despeja la columna izquierda. */}
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/80 to-black/30 md:bg-gradient-to-r md:from-black md:via-black/90 md:via-35% md:to-transparent" />
 
                   {/* DEGRADADO INFERIOR */}
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
                   {/* CONTENIDO - 1/3 IZQUIERDA */}
-                  <div className="absolute inset-y-0 left-0 z-20 flex w-full md:w-[42%] flex-col justify-center px-8 md:px-16">
+                  <div className="absolute inset-y-0 left-0 z-20 flex w-full flex-col justify-end px-6 pb-20 md:w-[42%] md:justify-center md:px-16 md:pb-0">
                     <div className="mb-5 inline-flex w-fit items-center gap-2.5 rounded-full border border-white/15 bg-black/50 px-4 py-1.5 backdrop-blur-md">
                       <span className="h-2 w-2 rounded-full bg-[#FFD21F] shadow-[0_0_10px_#FFD21F]" />
 
@@ -128,12 +140,19 @@ export function CarruselSection() {
                       </span>
                     </div>
 
-                    <h1 className="mb-4 text-3xl font-extrabold uppercase tracking-tight text-white md:text-5xl">
-                      Soluciones que hacen{" "}
-                      <span className="bg-gradient-to-r from-[#FFD21F] via-[#FF7A00] to-[#E50914] bg-clip-text text-transparent">
-                        destacar
-                      </span>{" "}
-                      tu marca
+                    <h1 className="mb-4 text-3xl font-extrabold uppercase leading-[1.05] tracking-tight text-white md:text-5xl">
+                      {titleLines.map((line, lineIndex) => (
+                        <span
+                          key={`${line}-${lineIndex}`}
+                          className={
+                            lineIndex === titleLines.length - 1
+                              ? "block bg-gradient-to-r from-[#FFD21F] via-[#FF7A00] to-[#E50914] bg-clip-text text-transparent"
+                              : "block"
+                          }
+                        >
+                          {line}
+                        </span>
+                      ))}
                     </h1>
 
                     <p className="mb-7 max-w-xl text-sm font-light leading-relaxed text-white/70 md:text-base">

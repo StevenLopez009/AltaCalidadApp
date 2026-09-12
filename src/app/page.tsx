@@ -2,17 +2,23 @@ import { ServicesSection } from "../modules/home/components/ServicesSection";
 import { PortfolioSection } from "../modules/home/components/PortafolioSection";
 import Link from "next/link";
 import { CarruselSection } from "../modules/home/components/CarruselSection";
+import { WhatsAppButton } from "../modules/home/components/WhatsAppButton";
+import { getHeroTitle } from "../modules/settings/services/settings.service";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const heroTitle = await getHeroTitle();
+
   return (
     <main className="min-h-screen bg-black text-white selection:bg-[#FF7A00] selection:text-white">
       {/* El Navbar es fixed, por lo que va por fuera o junto al carrusel sin saltos */}
-      <CarruselSection />
+      <CarruselSection heroTitle={heroTitle} />
       <ServicesSection />
       <PortfolioSection />
 
       <footer className="border-t border-white/10 bg-[#050505]">
-        <div className="mx-auto grid max-w-7xl gap-12 px-8 py-16 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 md:grid-cols-4 md:gap-12">
           {/* Logo */}
           <div>
             <p className="mt-2 leading-7 text-white/60 text-sm">
@@ -147,7 +153,7 @@ export default function Home() {
         </div>
 
         <div className="border-t border-white/10">
-          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-8 py-6 text-xs text-white/40 md:flex-row">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-6 text-center text-xs text-white/40 sm:px-8 md:flex-row md:text-left">
             <p>
               © {new Date().getFullYear()} Gran Calidad. Todos los derechos
               reservados.
@@ -156,6 +162,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <WhatsAppButton />
     </main>
   );
 }

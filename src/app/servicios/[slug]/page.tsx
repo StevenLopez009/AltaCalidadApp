@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { listServicesByCategory } from "@/src/modules/services/services/services.service";
 import { findCategoryBySlug } from "@/src/modules/categories/services/categories.service";
 import { CategoryServices } from "@/src/modules/services/components/CategoryServices";
+import { WhatsAppButton } from "@/src/modules/home/components/WhatsAppButton";
+
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
@@ -22,6 +25,8 @@ export default async function CategoryPage({
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <CategoryServices category={category} services={services} />
+
+      <WhatsAppButton />
     </main>
   );
 }
