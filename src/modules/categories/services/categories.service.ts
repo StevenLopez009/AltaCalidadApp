@@ -4,7 +4,7 @@ import {
   getCategories,
   getCategoryBySlug,
 } from "../repositories/categories.repositories";
-import { CreateCategoryDto } from "../shared/types/createCategoryDto";
+import { CreateCategoryDto } from "@/src/shared/types/createCategoryDto";
 
 export async function listCategories() {
   return await getCategories();

@@ -3,8 +3,8 @@ import CompanyList from "@/src/modules/company/components/CompanyList";
 
 export default function CompaniesPage() {
   return (
-    <main className="min-h-screen bg-[#0B0914]">
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main>
+      <div className="mx-auto w-full max-w-7xl py-6">
         {/* PAGE HEADER */}
         <div className="mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

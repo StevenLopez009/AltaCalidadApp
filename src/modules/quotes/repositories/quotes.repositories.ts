@@ -1,8 +1,9 @@
 import { db } from "@/src/shared/lib/db";
 import { CreateQuoteDto } from "@/src/shared/types/CreateQuoteDto";
+import type { ResultSetHeader } from "mysql2/promise";
 
 export async function createQuote(data: CreateQuoteDto) {
-  const [result] = await db.query(
+  const [result] = await db.query<ResultSetHeader>(
     `
     INSERT INTO quotes
     (

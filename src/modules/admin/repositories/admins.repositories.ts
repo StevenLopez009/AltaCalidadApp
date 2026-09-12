@@ -1,10 +1,11 @@
 import { db } from "../../../shared/lib/db";
 import { Admin } from "../../../shared/types/admin";
+import type { RowDataPacket } from "mysql2/promise";
 
 export async function getAdminByUsername(
   username: string,
 ): Promise<Admin | null> {
-  const [rows] = await db.query<Admin[]>(
+  const [rows] = await db.query<(Admin & RowDataPacket)[]>(
     `
       SELECT
         id,

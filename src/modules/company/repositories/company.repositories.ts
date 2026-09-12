@@ -1,9 +1,10 @@
 import { db } from "@/src/shared/lib/db";
 import { Company } from "@/src/shared/types/company";
 import { CreateCompanyDto } from "@/src/shared/types/createCompanyDto";
+import type { RowDataPacket } from "mysql2/promise";
 
 export async function getCompanies(): Promise<Company[]> {
-  const [rows] = await db.query<Company[]>(
+  const [rows] = await db.query<(Company & RowDataPacket)[]>(
     `
       SELECT
         id,
