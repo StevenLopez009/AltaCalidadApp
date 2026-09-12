@@ -3,17 +3,35 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type OrderStatus = "pendiente" | "en_produccion";
+
 interface ProductionOrder {
   id: number;
-  company_id: number;
+  company_id: number | null;
   delivery_date: string;
-  status: "pendiente" | "en_produccion";
+  status: OrderStatus;
   total: number;
-  company_name: string;
-  services: string;
+  company_name: string | null;
+  services: string | null;
 }
 
-export default function ProductionQueue() {
+function formatFullDate(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "long",
+  });
+}
+
+interface ProductionQueueProps {
+  /** Día elegido en el calendario (AAAA-MM-DD). Sin él se muestra toda la cola. */
+  selectedDate?: string | null;
+}
+
+export default function ProductionQueue({
+  selectedDate,
+}: ProductionQueueProps) {
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +40,11 @@ export default function ProductionQueue() {
       try {
         setLoading(true);
 
-        const response = await fetch("/api/orders?productionQueue=true");
+        const response = await fetch(
+          selectedDate
+            ? `/api/orders?date=${selectedDate}`
+            : "/api/orders?productionQueue=true",
+        );
 
         if (!response.ok) {
           throw new Error("No se pudo obtener la cola de producción");
@@ -41,7 +63,7 @@ export default function ProductionQueue() {
     }
 
     getProductionOrders();
-  }, []);
+  }, [selectedDate]);
 
   const getDeliveryDate = (date: string) => {
     const [year, month, day] = date.split("T")[0].split("-").map(Number);
@@ -72,12 +94,9 @@ export default function ProductionQueue() {
     });
   };
 
-  const getStatusLabel = (status: ProductionOrder["status"]) => {
-    if (status === "pendiente") {
-      return "Pendiente";
-    }
-
-    return "En producción";
+  const statusLabels: Record<OrderStatus, string> = {
+    pendiente: "Pendiente",
+    en_produccion: "En producción",
   };
 
   const getPriorityStyle = (date: string) => {
@@ -107,7 +126,11 @@ export default function ProductionQueue() {
             Cola de producción
           </h2>
 
-          <p className="text-xs text-zinc-500">Pedidos próximos a entregar</p>
+          <p className="text-xs text-zinc-500">
+            {selectedDate
+              ? `Pendientes del ${formatFullDate(selectedDate)}`
+              : "Pedidos próximos a entregar"}
+          </p>
         </div>
 
         <span className="rounded-full border border-orange-500/30 bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-300 shadow-[0_0_15px_rgba(251,146,60,0.15)]">
@@ -125,7 +148,11 @@ export default function ProductionQueue() {
       {/* EMPTY */}
       {!loading && orders.length === 0 && (
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          <p className="text-xs text-zinc-500">No hay pedidos en producción.</p>
+          <p className="text-xs text-zinc-500">
+            {selectedDate
+              ? "No hay pedidos pendientes este día."
+              : "No hay pedidos en producción."}
+          </p>
         </div>
       )}
 
@@ -167,11 +194,11 @@ export default function ProductionQueue() {
                   {/* INFORMACIÓN */}
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-white">
-                      {order.services}
+                      {order.services ?? "Sin servicios"}
                     </p>
 
                     <p className="truncate text-[11px] text-zinc-500">
-                      {order.company_name}
+                      {order.company_name ?? "Sin cliente"}
                     </p>
                   </div>
 
@@ -206,7 +233,7 @@ export default function ProductionQueue() {
                 {/* ESTADO */}
                 <div className="mt-2">
                   <span className="text-[10px] text-zinc-500">
-                    {getStatusLabel(order.status)}
+                    {statusLabels[order.status]}
                   </span>
                 </div>
               </Link>
