@@ -8,20 +8,35 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const result = await createNewService(body);
-
-    return NextResponse.json(result, {
-      status: 201,
+    const result = await createNewService({
+      category_id: Number(body.category_id),
+      material_id: body.material_id ? Number(body.material_id) : null,
+      material_usage:
+        Number(body.material_usage) > 0 ? Number(body.material_usage) : 1,
+      name: String(body.name ?? "").trim(),
+      description: String(body.description ?? "").trim(),
+      unit: String(body.unit ?? ""),
+      price: Number(body.price) || 0,
+      image: String(body.image ?? ""),
     });
+
+    // El id permite crear los adicionales del servicio recién guardado.
+    return NextResponse.json(
+      { message: "Servicio creado correctamente", id: result.insertId },
+      { status: 201 },
+    );
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       {
-        message: "Error creando el servicio",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error creando el servicio",
       },
       {
-        status: 500,
+        status: 400,
       },
     );
   }

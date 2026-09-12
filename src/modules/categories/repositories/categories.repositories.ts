@@ -1,9 +1,10 @@
 import { db } from "@/src/shared/lib/db";
 import { Category } from "@/src/shared/types/category";
 import { CreateCategoryDto } from "@/src/shared/types/createCategoryDto";
+import type { RowDataPacket } from "mysql2/promise";
 
 export async function getCategories(): Promise<Category[]> {
-  const [rows] = await db.query<Category[]>(
+  const [rows] = await db.query<(Category & RowDataPacket)[]>(
     `
     SELECT
         id,

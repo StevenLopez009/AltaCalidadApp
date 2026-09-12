@@ -1,20 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import Calendar from "./components/Calendar";
 import ProductionQueue from "./components/ProductionQueue";
 import OrdersOverview from "./components/OrdersOverview";
 import PendingOrdersChart from "./components/PendingOrdersChart";
 import HeaderCarouselUpload from "./components/HeaderCarouselUpload";
+import HeroTitleEditor from "./components/HeroTitleEditor";
+import PortfolioUpload from "./components/PortfolioUpload";
 import InventoryStatus from "../../../modules/materials/components/InventoryStatus";
-import AdminSidebar from "./components/AdminSidebar";
+import FinanceControl from "../../../modules/finance/components/FinanceControl";
+import ProfitControl from "../../../modules/finance/components/ProfitControl";
 
 import { Building2, Package, ShoppingCart } from "lucide-react";
 
 export default function AdminDashboard() {
+  // El día elegido en el calendario alimenta la cola de producción.
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-[#f7f4ed]">
+    <>
       {/* GRID DECORATIVO */}
       <div className="pointer-events-none fixed inset-0 opacity-[0.035]">
         <div
@@ -27,12 +34,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-[1800px] p-4 md:p-6 lg:p-8">
-        {/* SIDEBAR */}
-        <AdminSidebar />
-
-        {/* CONTENIDO */}
-        <main className="ml-0 lg:ml-[260px]">
+      <div className="relative">
           {/* ===================================================== */}
           {/* HEADER / HERO */}
           {/* ===================================================== */}
@@ -40,23 +42,23 @@ export default function AdminDashboard() {
             className="
       relative
       mb-6
-      h-[500px]
       overflow-hidden
-      rounded-[32px]
+      rounded-[24px]
       bg-[#171717]
+      sm:rounded-[32px]
       lg:h-[400px]
     "
           >
-            {/* BLOQUES DE COLOR */}
-            <div className="absolute right-0 top-0 h-full w-[35%] bg-gradient-to-br from-[#FFD21C] via-[#FF7A00] to-[#FF3030]" />
+            {/* BLOQUES DE COLOR (solo escritorio: en móvil taparían el título) */}
+            <div className="absolute right-0 top-0 hidden h-full w-[35%] bg-gradient-to-br from-[#FFD21C] via-[#FF7A00] to-[#FF3030] lg:block" />
 
-            <div className="absolute right-[22%] top-0 h-full w-[2px] rotate-[12deg] bg-black/20" />
+            <div className="absolute right-[22%] top-0 hidden h-full w-[2px] rotate-[12deg] bg-black/20 lg:block" />
 
             <div className="relative z-10 grid h-full grid-cols-1 lg:grid-cols-[1fr_1.4fr]">
               {/* TEXTO */}
-              <div className="flex flex-col justify-between p-7 md:p-10 lg:p-12">
+              <div className="flex flex-col justify-between p-6 md:p-10 lg:p-12">
                 <div>
-                  <div className="mb-8 flex items-center gap-3">
+                  <div className="mb-6 flex items-center gap-3 lg:mb-8">
                     <span className="h-3 w-3 rounded-full bg-[#FFD21C]" />
 
                     <span className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
@@ -64,13 +66,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
 
-                  <h1 className="max-w-xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.05em] md:text-6xl lg:text-7xl">
-                    Creamos.
-                    <br />
-                    Producimos.
-                    <br />
-                    <span className="text-[#FFD21C]">Entregamos.</span>
-                  </h1>
+                  <HeroTitleEditor />
                 </div>
 
                 <div className="mt-10 flex items-center gap-4">
@@ -83,7 +79,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* CARRUSEL */}
-              <div className="relative h-full min-h-0 overflow-hidden">
+              <div className="relative h-[260px] min-h-0 overflow-hidden sm:h-[320px] lg:h-full">
                 <HeaderCarouselUpload />
               </div>
             </div>
@@ -95,7 +91,7 @@ export default function AdminDashboard() {
               className="
               group relative min-h-[190px]
               overflow-hidden rounded-2xl
-              bg-[#F7F4ED] p-7 text-[#111]
+              bg-[#F7F4ED] p-5 text-[#111] sm:p-7
               transition-all duration-300
               hover:-translate-y-1
             "
@@ -114,7 +110,7 @@ export default function AdminDashboard() {
                     Gestión
                   </p>
 
-                  <h2 className="text-3xl font-black uppercase tracking-tight">
+                  <h2 className="text-2xl font-black uppercase tracking-tight lg:text-3xl">
                     Empresas
                   </h2>
                 </div>
@@ -127,7 +123,7 @@ export default function AdminDashboard() {
               className="
               group relative min-h-[190px]
               overflow-hidden rounded-2xl
-              bg-[#FFD21C] p-7 text-[#111]
+              bg-[#FFD21C] p-5 text-[#111] sm:p-7
               transition-all duration-300
               hover:-translate-y-1
             "
@@ -146,7 +142,7 @@ export default function AdminDashboard() {
                     Catálogo
                   </p>
 
-                  <h2 className="text-3xl font-black uppercase tracking-tight">
+                  <h2 className="text-xl font-black uppercase tracking-tight md:text-2xl lg:text-3xl">
                     Productos
                     <br />& Servicios
                   </h2>
@@ -161,7 +157,7 @@ export default function AdminDashboard() {
               group relative min-h-[190px]
               overflow-hidden rounded-2xl
               bg-gradient-to-br from-[#FF7A00] to-[#FF3030]
-              p-7 text-white
+              p-5 text-white sm:p-7
               transition-all duration-300
               hover:-translate-y-1
             "
@@ -180,7 +176,7 @@ export default function AdminDashboard() {
                     Operaciones
                   </p>
 
-                  <h2 className="text-4xl font-black uppercase tracking-tight">
+                  <h2 className="text-2xl font-black uppercase tracking-tight md:text-3xl lg:text-4xl">
                     Nuevo
                     <br />
                     Pedido +
@@ -212,6 +208,33 @@ export default function AdminDashboard() {
             </div>
           </section>
           {/* ===================================================== */}
+          {/* FINANZAS */}
+          {/* ===================================================== */}
+          <section className="mb-6">
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FFD21C]">
+                  05 / DINERO
+                </span>
+
+                <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
+                  Finanzas
+                </h2>
+              </div>
+
+              <div className="hidden h-[2px] w-32 bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030] md:block" />
+            </div>
+
+            <div className="overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
+              <FinanceControl />
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
+              <ProfitControl />
+            </div>
+          </section>
+
+          {/* ===================================================== */}
           {/* OPERACIÓN */}
           {/* ===================================================== */}
 
@@ -220,7 +243,7 @@ export default function AdminDashboard() {
             <div className="mb-3 flex items-end justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FFD21C]">
-                  05 / OPERACIÓN
+                  06 / OPERACIÓN
                 </span>
 
                 <h2 className="mt-1 text-3xl font-black uppercase tracking-[-0.03em] text-white">
@@ -255,7 +278,7 @@ export default function AdminDashboard() {
                 <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030]" />
 
                 <div className="p-5">
-                  <Calendar />
+                  <Calendar onSelectDate={setSelectedDate} />
                 </div>
               </div>
 
@@ -278,7 +301,7 @@ export default function AdminDashboard() {
                 <div className="absolute left-0 top-0 h-1 w-full bg-[#FFD21C]" />
 
                 <div className="p-5">
-                  <ProductionQueue />
+                  <ProductionQueue selectedDate={selectedDate} />
                 </div>
               </div>
             </div>
@@ -290,7 +313,7 @@ export default function AdminDashboard() {
           <section className="mb-6">
             <div className="mb-3">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF3030]">
-                06 / CONTROL
+                07 / CONTROL
               </span>
 
               <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
@@ -310,6 +333,29 @@ export default function AdminDashboard() {
               </div>
             </div>
           </section>
+          {/* ===================================================== */}
+          {/* PORTAFOLIO */}
+          {/* ===================================================== */}
+          <section className="mb-6">
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+                  08 / SITIO WEB
+                </span>
+
+                <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
+                  Portafolio
+                </h2>
+              </div>
+
+              <div className="hidden h-[2px] w-32 bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030] md:block" />
+            </div>
+
+            <div className="overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
+              <PortfolioUpload />
+            </div>
+          </section>
+
           <div className="flex flex-col items-start justify-between gap-3 border-t border-white/10 py-6 text-xs uppercase tracking-[0.2em] text-zinc-500 md:flex-row md:items-center">
             <span>ALTA CALIDAD</span>
 
@@ -321,8 +367,7 @@ export default function AdminDashboard() {
 
             <span>Creative Production Center</span>
           </div>
-        </main>
       </div>
-    </div>
+    </>
   );
 }
