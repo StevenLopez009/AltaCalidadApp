@@ -32,6 +32,7 @@ export default function OrdersOverview() {
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [orderId, setOrderId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -71,7 +72,13 @@ export default function OrdersOverview() {
   const filteredOrders = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
 
+    // Se ignora todo lo que no sea numero para que "#128" tambien encuentre.
+    const id = orderId.replace(/\D/g, "");
+
     return orders.filter((order) => {
+      // Empieza por, no contiene: escribir "12" no debe traer el pedido 512.
+      const matchesId = !id || String(order.id).startsWith(id);
+
       const matchesCustomer =
         !search ||
         order.company_name?.toLowerCase().includes(search) ||
@@ -91,6 +98,7 @@ export default function OrdersOverview() {
         paymentFilter === "todos" || order.payment_status === paymentFilter;
 
       return (
+        matchesId &&
         matchesCustomer &&
         matchesStartDate &&
         matchesEndDate &&
@@ -98,7 +106,15 @@ export default function OrdersOverview() {
         matchesPayment
       );
     });
-  }, [orders, searchTerm, startDate, endDate, statusFilter, paymentFilter]);
+  }, [
+    orders,
+    orderId,
+    searchTerm,
+    startDate,
+    endDate,
+    statusFilter,
+    paymentFilter,
+  ]);
 
   const totalOrders = useMemo(() => {
     return filteredOrders
@@ -210,10 +226,45 @@ export default function OrdersOverview() {
           grid-cols-1
           gap-3
           md:grid-cols-2
-          xl:grid-cols-[minmax(220px,1fr)_150px_165px_210px]
+          xl:grid-cols-[120px_minmax(200px,1fr)_150px_165px_210px]
           xl:items-end
         "
       >
+        {/* BUSCADOR POR ID */}
+        <div className="min-w-0">
+          <label
+            htmlFor="order-id-search"
+            className="mb-1.5 block text-xs font-medium text-zinc-500"
+          >
+            N.º de pedido
+          </label>
+
+          <input
+            id="order-id-search"
+            type="text"
+            inputMode="numeric"
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            placeholder="#000"
+            className="
+              w-full
+              rounded-xl
+              border border-orange-500/20
+              bg-[#0B0914]
+              px-4
+              py-3
+              text-sm
+              text-white
+              outline-none
+              placeholder:text-zinc-600
+              transition
+              focus:border-orange-500/50
+              focus:ring-1
+              focus:ring-orange-500/20
+            "
+          />
+        </div>
+
         {/* BUSCADOR */}
         <div className="min-w-0">
           <label className="mb-1.5 block text-xs font-medium text-zinc-500">
@@ -395,7 +446,8 @@ export default function OrdersOverview() {
       {!loading && filteredOrders.length === 0 && (
         <div className="flex flex-1 items-center justify-center px-4 text-center">
           <p className="text-xs text-zinc-500">
-            {searchTerm ||
+            {orderId ||
+            searchTerm ||
             startDate ||
             endDate ||
             statusFilter !== "todos" ||
