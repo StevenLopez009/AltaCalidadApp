@@ -30,7 +30,22 @@ const months = [
   "Diciembre",
 ];
 
-export default function Calendar() {
+function toISODate(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(
+    2,
+    "0",
+  )}`;
+}
+
+interface CalendarProps {
+  /**
+   * Recibe el día elegido como AAAA-MM-DD. Debe ser una referencia estable
+   * (por ejemplo el setter de un useState) para no reiniciar el efecto.
+   */
+  onSelectDate?: (date: string) => void;
+}
+
+export default function Calendar({ onSelectDate }: CalendarProps) {
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1),
@@ -53,8 +68,11 @@ export default function Calendar() {
           throw new Error("No se pudieron obtener los pedidos");
         }
         const data = await response.json();
+        // Mismo criterio que la cola de producción, para que el contador del
+        // día coincida con los pedidos que se listan al seleccionarlo.
         const pendingOrders = (data.orders ?? []).filter(
-          (order: Order) => order.status === "pendiente",
+          (order: Order) =>
+            order.status === "pendiente" || order.status === "en_produccion",
         );
         setOrders(pendingOrders);
       } catch (error) {
@@ -67,6 +85,10 @@ export default function Calendar() {
 
     getOrdersByMonth();
   }, [year, month]);
+
+  useEffect(() => {
+    onSelectDate?.(toISODate(year, month, selectedDate));
+  }, [year, month, selectedDate, onSelectDate]);
 
   const firstDay = new Date(year, month, 1).getDay();
   const startDay = firstDay === 0 ? 6 : firstDay - 1;
