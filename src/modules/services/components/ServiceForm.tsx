@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Plus, X } from "lucide-react";
 
 interface Category {
   id: number;
@@ -26,6 +27,29 @@ export function ServiceForm() {
   const [preview, setPreview] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  // Los adicionales se guardan en memoria y se crean cuando el servicio ya
+  // existe: necesitan su id.
+  const [addons, setAddons] = useState<{ name: string; price: string }[]>([]);
+  const [addonName, setAddonName] = useState("");
+  const [addonPrice, setAddonPrice] = useState("");
+
+  // Cuánto material gasta cada unidad vendida (1 si se miden igual).
+  const [materialUsage, setMaterialUsage] = useState("1");
+
+  function addAddon() {
+    const name = addonName.trim();
+
+    if (!name) return;
+
+    setAddons((current) => [...current, { name, price: addonPrice || "0" }]);
+    setAddonName("");
+    setAddonPrice("");
+  }
+
+  function removeAddon(index: number) {
+    setAddons((current) => current.filter((_, i) => i !== index));
+  }
 
   useEffect(() => {
     loadCategories();
@@ -102,7 +126,8 @@ export function ServiceForm() {
         },
         body: JSON.stringify({
           category_id: Number(categoryId),
-          material_id: Number(materialId),
+          material_id: materialId ? Number(materialId) : null,
+          material_usage: Number(materialUsage) || 1,
           name,
           description,
           unit,
@@ -111,11 +136,36 @@ export function ServiceForm() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error();
+        throw new Error(data.message ?? "Error creando servicio");
       }
 
-      alert("Servicio creado");
+      // Ya con el id del servicio se registran sus adicionales.
+      const failed: string[] = [];
+
+      for (const addon of addons) {
+        const addonResponse = await fetch("/api/services/addons", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            serviceId: data.id,
+            name: addon.name,
+            price: Number(addon.price) || 0,
+          }),
+        });
+
+        if (!addonResponse.ok) {
+          failed.push(addon.name);
+        }
+      }
+
+      alert(
+        failed.length > 0
+          ? `Servicio creado, pero no se pudieron guardar: ${failed.join(", ")}`
+          : "Servicio creado",
+      );
 
       setCategoryId("");
       setName("");
@@ -124,8 +174,11 @@ export function ServiceForm() {
       setPrice("");
       setImage("");
       setPreview("");
-    } catch {
-      alert("Error creando servicio");
+      setAddons([]);
+      setMaterialId("");
+      setMaterialUsage("1");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error creando servicio");
     } finally {
       setLoading(false);
     }
@@ -370,6 +423,109 @@ export function ServiceForm() {
             />
           </div>
         )}
+      </div>
+
+      {/* Consumo de material */}
+      {materialId && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-white/80">
+            Material por cada {unit}
+          </label>
+
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={materialUsage}
+            onChange={(e) => setMaterialUsage(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition-all focus:border-orange-500/40"
+          />
+
+          <p className="text-xs text-white/30">
+            Cuánto material gasta cada {unit} vendido. Déjalo en 1 si el
+            servicio y el material se miden igual.
+          </p>
+        </div>
+      )}
+
+      {/* Adicionales */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/80">
+          Adicionales <span className="text-white/30">(opcional)</span>
+        </label>
+
+        <p className="text-xs text-white/30">
+          Extras que el cliente puede sumar al pedido, como ojales o
+          instalación.
+        </p>
+
+        {addons.length > 0 && (
+          <ul className="space-y-1.5 pt-1">
+            {addons.map((addon, index) => (
+              <li
+                key={`${addon.name}-${index}`}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#0B0914] px-3 py-2"
+              >
+                <span className="min-w-0 flex-1 truncate text-sm text-white">
+                  {addon.name}
+                </span>
+
+                <span className="shrink-0 text-sm font-semibold text-orange-300">
+                  ${Number(addon.price || 0).toLocaleString("es-CO")}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => removeAddon(index)}
+                  aria-label={`Quitar ${addon.name}`}
+                  className="shrink-0 rounded-lg p-1 text-white/30 transition hover:bg-red-500/10 hover:text-red-400"
+                >
+                  <X size={15} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          <input
+            value={addonName}
+            onChange={(e) => setAddonName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addAddon();
+              }
+            }}
+            placeholder="Ej: Ojales metálicos"
+            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-white/20 focus:border-orange-500/40"
+          />
+
+          <input
+            type="number"
+            min="0"
+            value={addonPrice}
+            onChange={(e) => setAddonPrice(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addAddon();
+              }
+            }}
+            placeholder="Precio"
+            className="w-28 rounded-xl border border-white/10 bg-[#0B0914] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-white/20 focus:border-orange-500/40"
+          />
+
+          <button
+            type="button"
+            onClick={addAddon}
+            disabled={!addonName.trim()}
+            className="flex items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/15 px-4 py-3 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/25 disabled:opacity-40"
+          >
+            <Plus size={16} />
+            Agregar
+          </button>
+        </div>
       </div>
 
       {/* Botón */}
