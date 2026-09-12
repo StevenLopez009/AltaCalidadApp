@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { WHATSAPP_NUMBER } from "@/src/shared/config/contact";
+
 import {
   Building2,
   Check,
@@ -10,6 +12,7 @@ import {
   Phone,
   Plus,
   ShoppingCart,
+  Copy,
   Trash2,
   Upload,
   User,
@@ -28,6 +31,16 @@ interface Props {
   services: Service[];
 }
 
+interface Addon {
+  id: number;
+  service_id: number;
+  name: string;
+  price: number;
+}
+
+/** Adicionales elegidos en una línea: id del adicional y cuántos van. */
+type SelectedAddons = Record<number, number>;
+
 interface CartItem {
   id: string;
   categoryId: number;
@@ -37,9 +50,14 @@ interface CartItem {
   height: string;
   observations: string;
   designFile: File | null;
+  addons: SelectedAddons;
 }
 
 type CustomerType = "empresa" | "usuario";
+
+type PaymentOption = "ninguno" | "total" | "parcial";
+
+type PaymentMethod = "efectivo" | "digital";
 
 interface Company {
   id: number;
@@ -47,7 +65,7 @@ interface Company {
   discount_percentage: number;
 }
 
-const WHATSAPP_NUMBER = "573161534971";
+
 
 export function CategoryServices({ category, services }: Props) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -58,6 +76,7 @@ export function CategoryServices({ category, services }: Props) {
   // ==========================================
 
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [addons, setAddons] = useState<Addon[]>([]);
   const [customerType, setCustomerType] = useState<CustomerType>("empresa");
   const [companyId, setCompanyId] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -70,11 +89,29 @@ export function CategoryServices({ category, services }: Props) {
   const [deliveryDate, setDeliveryDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [paymentOption, setPaymentOption] = useState<PaymentOption>("ninguno");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+
   // ==========================================
   // CARGAR EMPRESAS
   // ==========================================
 
   useEffect(() => {
+    async function loadAddons() {
+      try {
+        const response = await fetch("/api/services/addons");
+
+        if (response.ok) {
+          setAddons(await response.json());
+        }
+      } catch (error) {
+        console.error("Error cargando adicionales:", error);
+      }
+    }
+
+    loadAddons();
+
     async function loadCompanies() {
       try {
         const response = await fetch("/api/company");
@@ -141,9 +178,68 @@ export function CategoryServices({ category, services }: Props) {
       height: "",
       observations: "",
       designFile: null,
+      addons: {},
     };
 
     setItems((current) => [...current, newItem]);
+  }
+
+  // Copia una línea para pedir el mismo servicio con otras medidas.
+  function duplicateItem(index: number) {
+    setItems((current) => {
+      const copy = { ...current[index], id: crypto.randomUUID() };
+
+      return [
+        ...current.slice(0, index + 1),
+        copy,
+        ...current.slice(index + 1),
+      ];
+    });
+
+    setConfiguringIndex(index + 1);
+  }
+
+  function getAddonsForService(serviceId: number) {
+    return addons.filter((addon) => addon.service_id === Number(serviceId));
+  }
+
+  function calculateAddonsSubtotal(item: CartItem) {
+    return Object.entries(item.addons ?? {}).reduce((total, [id, qty]) => {
+      const addon = addons.find((option) => option.id === Number(id));
+
+      return total + (Number(addon?.price) || 0) * (Number(qty) || 0);
+    }, 0);
+  }
+
+  function toggleAddon(index: number, addonId: number) {
+    setItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        const next = { ...item.addons };
+
+        if (next[addonId]) {
+          delete next[addonId];
+        } else {
+          next[addonId] = Number(item.quantity) || 1;
+        }
+
+        return { ...item, addons: next };
+      }),
+    );
+  }
+
+  function setAddonQuantity(index: number, addonId: number, value: string) {
+    setItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        return {
+          ...item,
+          addons: { ...item.addons, [addonId]: Math.max(Number(value) || 0, 0) },
+        };
+      }),
+    );
   }
 
   // ==========================================
@@ -216,16 +312,14 @@ export function CategoryServices({ category, services }: Props) {
     const height = Number(item.height) || 0;
     const price = Number(service.price) || 0;
 
-    switch (service.unit) {
-      case "m2":
-        return width * height * quantity * price;
+    const base =
+      service.unit === "m2"
+        ? width * height * quantity * price
+        : service.unit === "metro"
+          ? width * quantity * price
+          : quantity * price;
 
-      case "metro":
-        return width * quantity * price;
-
-      default:
-        return quantity * price;
-    }
+    return base + calculateAddonsSubtotal(item);
   }
 
   // ==========================================
@@ -237,7 +331,7 @@ export function CategoryServices({ category, services }: Props) {
       (total, item) => total + calculateItemSubtotal(item),
       0,
     );
-  }, [items, services]);
+  }, [items, services, addons]);
 
   // ==========================================
   // DESCUENTO
@@ -246,6 +340,19 @@ export function CategoryServices({ category, services }: Props) {
   const discountAmount = subtotal * (discountPercentage / 100);
 
   const total = subtotal - discountAmount;
+
+  // ==========================================
+  // PAGO
+  // ==========================================
+
+  const paidAmount =
+    paymentOption === "total"
+      ? total
+      : paymentOption === "parcial"
+        ? Number(paymentAmount) || 0
+        : 0;
+
+  const amountDue = Math.max(total - paidAmount, 0);
 
   // ==========================================
   // ITEM QUE SE ESTÁ CONFIGURANDO
@@ -367,6 +474,18 @@ export function CategoryServices({ category, services }: Props) {
         lines.push(`   Medida: ${item.width} m`);
       }
 
+      Object.entries(item.addons ?? {}).forEach(([addonId, addonQuantity]) => {
+        const addon = addons.find((option) => option.id === Number(addonId));
+
+        if (!addon) return;
+
+        lines.push(
+          `   + ${addon.name} ×${addonQuantity}: ${formatCurrency(
+            Number(addon.price) * Number(addonQuantity),
+          )}`,
+        );
+      });
+
       if (item.observations.trim()) {
         lines.push(`   Observaciones: ${item.observations.trim()}`);
       }
@@ -390,6 +509,16 @@ export function CategoryServices({ category, services }: Props) {
     }
 
     lines.push(`*TOTAL: ${formatCurrency(total)}*`);
+
+    if (paidAmount > 0) {
+      lines.push("");
+      lines.push(
+        `💵 *Abonado (${paymentMethod}):* ${formatCurrency(paidAmount)}`,
+      );
+
+      lines.push(`Saldo pendiente: ${formatCurrency(amountDue)}`);
+    }
+
     lines.push("");
     lines.push("Gracias por elegir *Gran Calidad*.");
 
@@ -467,6 +596,24 @@ export function CategoryServices({ category, services }: Props) {
       // PREPARAR ITEMS
       // ==========================================
 
+      if (paymentOption === "parcial") {
+        if (!Number.isFinite(paidAmount) || paidAmount <= 0) {
+          alert("Ingrese el monto abonado.");
+
+          setSubmitting(false);
+
+          return;
+        }
+
+        if (paidAmount > total) {
+          alert("El abono no puede ser mayor al total del pedido.");
+
+          setSubmitting(false);
+
+          return;
+        }
+      }
+
       const orderItems = items.map((item) => {
         const service = getService(item.serviceId);
 
@@ -478,6 +625,13 @@ export function CategoryServices({ category, services }: Props) {
           height: item.height ? Number(item.height) : null,
           unit: service?.unit ?? null,
           observations: item.observations.trim() || null,
+
+          addons: Object.entries(item.addons ?? {})
+            .filter(([, quantity]) => Number(quantity) > 0)
+            .map(([addonId, quantity]) => ({
+              addonId: Number(addonId),
+              quantity: Number(quantity),
+            })),
         };
       });
 
@@ -512,6 +666,13 @@ export function CategoryServices({ category, services }: Props) {
       formData.append("total", String(total));
 
       formData.append("items", JSON.stringify(orderItems));
+
+      // Pago
+      if (paidAmount > 0) {
+        formData.append("paymentAmount", String(paidAmount));
+
+        formData.append("paymentMethod", paymentMethod);
+      }
 
       // ==========================================
       // ARCHIVOS
@@ -567,6 +728,10 @@ export function CategoryServices({ category, services }: Props) {
   // ==========================================
 
   function resetForm() {
+    setPaymentOption("ninguno");
+    setPaymentAmount("");
+    setPaymentMethod("efectivo");
+
     setCustomerType("empresa");
     setCompanyId("");
     setCustomerName("");
@@ -967,13 +1132,25 @@ export function CategoryServices({ category, services }: Props) {
                                     </p>
                                   </div>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => removeItem(item.id)}
-                                    className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400"
-                                  >
-                                    <Trash2 size={15} />
-                                  </button>
+                                  <div className="flex shrink-0 items-center gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => duplicateItem(index)}
+                                      title="Duplicar con otras medidas"
+                                      className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-yellow-400/10 hover:text-yellow-300"
+                                    >
+                                      <Copy size={15} />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => removeItem(item.id)}
+                                      title="Eliminar servicio"
+                                      className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* CANTIDAD */}
@@ -1007,6 +1184,41 @@ export function CategoryServices({ category, services }: Props) {
                                 </div>
 
                                 {/* MEDIDAS */}
+
+                                {((service.unit === "m2" &&
+                                  (!item.width || !item.height)) ||
+                                  (service.unit === "metro" &&
+                                    !item.width)) && (
+                                  <div className="mt-3">
+                                    <span className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-300">
+                                      Faltan medidas
+                                    </span>
+                                  </div>
+                                )}
+
+                                {Object.keys(item.addons ?? {}).length > 0 && (
+                                  <div className="mt-3 flex flex-wrap gap-1.5">
+                                    {Object.entries(item.addons).map(
+                                      ([addonId, addonQuantity]) => {
+                                        const addon = addons.find(
+                                          (option) =>
+                                            option.id === Number(addonId),
+                                        );
+
+                                        if (!addon) return null;
+
+                                        return (
+                                          <span
+                                            key={addonId}
+                                            className="rounded-lg border border-yellow-400/20 bg-yellow-400/[0.07] px-2 py-1 text-[10px] text-yellow-200"
+                                          >
+                                            +{addon.name} ×{addonQuantity}
+                                          </span>
+                                        );
+                                      },
+                                    )}
+                                  </div>
+                                )}
 
                                 {(service.unit === "m2" ||
                                   service.unit === "metro") &&
@@ -1084,6 +1296,100 @@ export function CategoryServices({ category, services }: Props) {
                             {formatCurrency(total)}
                           </span>
                         </div>
+                      </div>
+
+                      {/* PAGO */}
+
+                      <div className="mt-5 border-t border-orange-500/10 pt-5">
+                        <p className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-yellow-300">
+                          Pago
+                        </p>
+
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {(
+                            [
+                              { value: "ninguno", label: "Sin pago" },
+                              { value: "total", label: "Paga todo" },
+                              { value: "parcial", label: "Parcial" },
+                            ] as const
+                          ).map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setPaymentOption(option.value)}
+                              className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold transition ${
+                                paymentOption === option.value
+                                  ? "border-yellow-400/50 bg-yellow-400/15 text-yellow-200"
+                                  : "border-orange-500/10 bg-black/20 text-zinc-500 hover:text-zinc-300"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {paymentOption !== "ninguno" && (
+                          <div className="mt-3 space-y-3">
+                            {paymentOption === "parcial" && (
+                              <div>
+                                <label className="mb-1.5 block text-[11px] text-zinc-500">
+                                  Monto abonado
+                                </label>
+
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={total}
+                                  step="any"
+                                  value={paymentAmount}
+                                  onChange={(e) =>
+                                    setPaymentAmount(e.target.value)
+                                  }
+                                  placeholder="0"
+                                  className="w-full rounded-xl border border-orange-500/15 bg-black/30 px-3 py-2.5 text-sm font-bold text-white outline-none transition focus:border-yellow-400/50"
+                                />
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {(
+                                [
+                                  { value: "efectivo", label: "Efectivo" },
+                                  { value: "digital", label: "Digital" },
+                                ] as const
+                              ).map((method) => (
+                                <button
+                                  key={method.value}
+                                  type="button"
+                                  onClick={() => setPaymentMethod(method.value)}
+                                  className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold transition ${
+                                    paymentMethod === method.value
+                                      ? "border-yellow-400/50 bg-yellow-400/15 text-yellow-200"
+                                      : "border-orange-500/10 bg-black/20 text-zinc-500 hover:text-zinc-300"
+                                  }`}
+                                >
+                                  {method.label}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="flex justify-between rounded-xl bg-black/25 px-3 py-2.5 text-xs">
+                              <span className="text-zinc-500">
+                                Queda debiendo
+                              </span>
+
+                              <span
+                                className={
+                                  amountDue > 0
+                                    ? "font-black text-orange-300"
+                                    : "font-black text-green-400"
+                                }
+                              >
+                                {formatCurrency(amountDue)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* CONTINUAR */}
@@ -1377,6 +1683,90 @@ export function CategoryServices({ category, services }: Props) {
                 />
               </div>
 
+              {/* ADICIONALES */}
+
+              {getAddonsForService(configuringItem.serviceId).length > 0 && (
+                <div className="mt-6">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-yellow-300">
+                    Adicionales
+                  </p>
+
+                  <div className="space-y-2">
+                    {getAddonsForService(configuringItem.serviceId).map(
+                      (addon) => {
+                        const selected = Boolean(
+                          configuringItem.addons?.[addon.id],
+                        );
+
+                        return (
+                          <div
+                            key={addon.id}
+                            className={`flex flex-wrap items-center gap-2 rounded-xl border p-2.5 transition ${
+                              selected
+                                ? "border-yellow-400/40 bg-yellow-400/10"
+                                : "border-white/[0.07] bg-black/25"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toggleAddon(configuringIndex, addon.id)
+                              }
+                              className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                            >
+                              <span
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                                  selected
+                                    ? "border-yellow-400 bg-yellow-400 text-black"
+                                    : "border-white/20"
+                                }`}
+                              >
+                                {selected && <Check size={13} />}
+                              </span>
+
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-semibold text-white">
+                                  {addon.name}
+                                </span>
+
+                                <span className="block text-[10px] text-zinc-500">
+                                  {formatCurrency(Number(addon.price))} c/u
+                                </span>
+                              </span>
+                            </button>
+
+                            {selected && (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={configuringItem.addons[addon.id]}
+                                  onChange={(e) =>
+                                    setAddonQuantity(
+                                      configuringIndex,
+                                      addon.id,
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-16 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-center text-xs font-bold text-white outline-none focus:border-yellow-400/50"
+                                />
+
+                                <span className="w-24 text-right text-xs font-bold text-yellow-300">
+                                  {formatCurrency(
+                                    Number(addon.price) *
+                                      Number(configuringItem.addons[addon.id]),
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* SUBTOTAL */}
 
               <div className="mt-6 flex items-center justify-between rounded-2xl border border-orange-400/20 bg-orange-500/[0.06] p-4">
@@ -1388,6 +1778,14 @@ export function CategoryServices({ category, services }: Props) {
                   <p className="mt-1 bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-2xl font-black text-transparent">
                     {formatCurrency(configuringSubtotal)}
                   </p>
+
+                  {calculateAddonsSubtotal(configuringItem) > 0 && (
+                    <p className="mt-1 text-[10px] text-zinc-500">
+                      Incluye{" "}
+                      {formatCurrency(calculateAddonsSubtotal(configuringItem))}{" "}
+                      en adicionales
+                    </p>
+                  )}
                 </div>
 
                 <Check size={22} className="text-yellow-300" />

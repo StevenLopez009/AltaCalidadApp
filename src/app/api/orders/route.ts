@@ -3,6 +3,7 @@ import {
   getAllOrdersData,
   getOrdersCalendar,
   getProductionOrders,
+  getOrdersForDeliveryDate,
 } from "@/src/modules/order/services/orders.service";
 import { NextResponse } from "next/server";
 
@@ -113,7 +114,49 @@ export async function POST(request: Request) {
       );
     }
 
+    // ----------------------------------------------------------
+    // ABONO INICIAL (opcional)
+    // ----------------------------------------------------------
+
+    const paymentAmountRaw = formData.get("paymentAmount");
+    const paymentMethodRaw = formData.get("paymentMethod");
+
+    let payment: { amount: number; method: "efectivo" | "digital" } | null =
+      null;
+
+    if (paymentAmountRaw) {
+      const amount = Number(paymentAmountRaw);
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return NextResponse.json(
+          {
+            message: "El monto del pago no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      const method = String(paymentMethodRaw ?? "efectivo");
+
+      if (method !== "efectivo" && method !== "digital") {
+        return NextResponse.json(
+          {
+            message: "El método de pago no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      payment = { amount, method };
+    }
+
     const order = await createNewOrder({
+      payment,
+
       customerType,
       companyId: customerType === "empresa" ? Number(companyId) : null,
 
@@ -145,6 +188,13 @@ export async function POST(request: Request) {
         unit: item.unit ?? null,
         designFile: item.designFile ?? null,
         observations: item.observations ?? null,
+
+        addons: Array.isArray(item.addons)
+          ? item.addons.map((addon: { addonId: number; quantity: number }) => ({
+              addonId: Number(addon.addonId),
+              quantity: Number(addon.quantity),
+            }))
+          : [],
       })),
     });
 
@@ -179,6 +229,27 @@ export async function GET(request: Request) {
 
     if (productionQueue === "true") {
       const orders = await getProductionOrders();
+
+      return NextResponse.json({
+        orders,
+      });
+    }
+
+    const dateParam = searchParams.get("date");
+
+    if (dateParam) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        return NextResponse.json(
+          {
+            message: "La fecha debe tener el formato AAAA-MM-DD",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      const orders = await getOrdersForDeliveryDate(dateParam);
 
       return NextResponse.json({
         orders,

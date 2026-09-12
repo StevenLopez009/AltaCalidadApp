@@ -16,6 +16,13 @@ interface OrderItem {
   subtotal: number;
   designFile: string | null;
   observations: string | null;
+  addons: {
+    id: number;
+    name: string;
+    unitPrice: number;
+    quantity: number;
+    subtotal: number;
+  }[];
 }
 
 type PaymentStatus = "pendiente" | "pago_parcial" | "pagado";
@@ -46,6 +53,9 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [amountPaid, setAmountPaid] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "digital">(
+    "efectivo",
+  );
 
   const orderStatuses = [
     {
@@ -164,6 +174,7 @@ export default function OrderDetailsPage() {
         body: JSON.stringify({
           amount_paid: paid,
           payment_status: newPaymentStatus,
+          payment_method: paymentMethod,
         }),
       });
 
@@ -370,6 +381,26 @@ export default function OrderDetailsPage() {
                         Medidas: {item.width} × {item.height}
                       </p>
                     )}
+
+                    {(item.addons ?? []).length > 0 && (
+                      <ul className="mt-2 space-y-1 border-l border-orange-500/20 pl-2.5">
+                        {item.addons.map((addon) => (
+                          <li
+                            key={addon.id}
+                            className="flex flex-wrap items-baseline gap-x-2 text-[11px] text-zinc-500"
+                          >
+                            <span className="text-zinc-400">
+                              + {addon.name}
+                            </span>
+
+                            <span>
+                              ×{Number(addon.quantity)} ·{" "}
+                              {`$${Number(addon.subtotal).toLocaleString("es-CO")}`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
                   <p className="text-sm font-semibold text-orange-300">
@@ -458,6 +489,38 @@ export default function OrderDetailsPage() {
               <label className="mb-2 block text-xs text-zinc-500">
                 Registrar abono
               </label>
+
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { value: "efectivo", label: "Efectivo", color: "#d95926" },
+                    { value: "digital", label: "Digital", color: "#3987e5" },
+                  ] as const
+                ).map((method) => {
+                  const isActive = paymentMethod === method.value;
+
+                  return (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(method.value)}
+                      disabled={updatingAmountPaid}
+                      className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:opacity-50 ${
+                        isActive
+                          ? "border-white/25 bg-white/10 text-white"
+                          : "border-white/[0.08] bg-[#121215] text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: method.color }}
+                      />
+
+                      {method.label}
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className="flex gap-2">
                 <input

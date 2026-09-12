@@ -7,6 +7,8 @@ import {
 
 import { NextResponse } from "next/server";
 
+import type { PaymentMethod } from "@/src/modules/finance/repositories/finance.repositories";
+
 interface Props {
   params: Promise<{
     id: string;
@@ -191,6 +193,24 @@ export async function PATCH(request: Request, { params }: Props) {
         );
       }
 
+      // ------------------------------------------------------
+      // VALIDAR MÉTODO DE PAGO
+      // ------------------------------------------------------
+
+      const paymentMethod = (body.payment_method ??
+        "efectivo") as PaymentMethod;
+
+      if (paymentMethod !== "efectivo" && paymentMethod !== "digital") {
+        return NextResponse.json(
+          {
+            message: "El método de pago no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
       try {
         // ----------------------------------------------------
         // EL SERVICE SE ENCARGA DE:
@@ -203,7 +223,11 @@ export async function PATCH(request: Request, { params }: Props) {
         // 6. Guardar payment_status
         // ----------------------------------------------------
 
-        const result = await changeOrderPayment(orderId, amountPaid);
+        const result = await changeOrderPayment(
+          orderId,
+          amountPaid,
+          paymentMethod,
+        );
 
         return NextResponse.json({
           message: "Pago actualizado correctamente",

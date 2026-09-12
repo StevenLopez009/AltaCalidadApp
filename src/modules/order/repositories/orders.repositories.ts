@@ -1,5 +1,5 @@
 import { db } from "@/src/shared/lib/db";
-import type { PoolConnection } from "mysql2/promise";
+import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export type CustomerType = "empresa" | "usuario";
 
@@ -144,8 +144,57 @@ export async function getProductionQueue() {
   return rows;
 }
 
-export async function getOrderDetailsById(id: number) {
+export async function getOrdersByDeliveryDate(date: string) {
   const [rows] = await db.query(
+    `
+    SELECT
+      o.id,
+      o.company_id,
+      o.customer_type,
+      o.delivery_date,
+      o.status,
+      o.total,
+      COALESCE(c.name_company, o.customer_name) AS company_name,
+
+      GROUP_CONCAT(
+        DISTINCT s.name
+        ORDER BY s.name
+        SEPARATOR ', '
+      ) AS services
+
+    FROM orders o
+
+    LEFT JOIN company c
+      ON c.id = o.company_id
+
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.id
+
+    LEFT JOIN services s
+      ON s.id = oi.service_id
+
+    WHERE o.delivery_date = ?
+      AND o.status IN ('pendiente', 'en_produccion')
+
+    GROUP BY
+      o.id,
+      o.company_id,
+      o.customer_type,
+      o.delivery_date,
+      o.status,
+      o.total,
+      company_name
+
+    ORDER BY o.id ASC
+  `,
+    [date],
+  );
+
+  return rows;
+}
+
+export async function getOrderDetailsById(id: number) {
+  const [rows] = await db.query<RowDataPacket[]>(
     `
       SELECT 
         o.id,
@@ -283,20 +332,27 @@ export async function getAllOrders() {
   return rows;
 }
 
-export async function updateOrderPayment(id: number, amountPaid: number) {
-  const [result] = await db.query(
+export async function updateOrderPayment(
+  connection: PoolConnection,
+  id: number,
+  amountPaid: number,
+) {
+  const [result] = await connection.query(
     `
       UPDATE orders
       SET
         amount_paid = amount_paid + ?,
+        -- MySQL aplica los SET en orden, así que aquí amount_paid ya trae el
+        -- valor nuevo: sumarlo otra vez contaría el abono dos veces y daría
+        -- por pagado un pedido que solo va a medias.
         payment_status = CASE
-          WHEN amount_paid + ? <= 0 THEN 'pendiente'
-          WHEN amount_paid + ? >= total THEN 'pagado'
+          WHEN amount_paid <= 0 THEN 'pendiente'
+          WHEN amount_paid >= total THEN 'pagado'
           ELSE 'pago_parcial'
         END
       WHERE id = ?
     `,
-    [amountPaid, amountPaid, amountPaid, id],
+    [amountPaid, id],
   );
 
   return result;
