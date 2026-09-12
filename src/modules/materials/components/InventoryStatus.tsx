@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Cell,
   LabelList,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -33,8 +34,12 @@ interface ChartMaterial {
   unit: string;
   stock: number;
   minimum_stock: number;
+  coverage: number;
+  barValue: number;
   state: InventoryState;
 }
+
+const COVERAGE_CAP = 300;
 
 export default function InventoryStatus() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -69,19 +74,35 @@ export default function InventoryStatus() {
   };
 
   const chartData = useMemo<ChartMaterial[]>(() => {
-    return materials.map((material) => {
-      const stock = Number(material.stock) || 0;
-      const minimum_stock = Number(material.minimum_stock) || 0;
+    return materials
+      .map((material) => {
+        const stock = Number(material.stock) || 0;
+        const minimum_stock = Number(material.minimum_stock) || 0;
 
-      return {
-        id: material.id,
-        name: material.name,
-        unit: material.unit,
-        stock,
-        minimum_stock,
-        state: getInventoryState(stock, minimum_stock),
-      };
-    });
+        // Los materiales se miden en unidades distintas (m2, litros, unidades),
+        // así que comparar el stock en bruto no dice nada. La cobertura sobre
+        // el mínimo sí es comparable: 100% = justo en el punto de reposición.
+        const coverage =
+          minimum_stock > 0
+            ? Math.round((stock / minimum_stock) * 100)
+            : stock > 0
+              ? 999
+              : 0;
+
+        return {
+          id: material.id,
+          name: material.name,
+          unit: material.unit,
+          stock,
+          minimum_stock,
+          coverage,
+          // La barra se recorta para que un material muy surtido no deje al
+          // resto pegado al eje; el tooltip conserva la cifra real.
+          barValue: Math.min(coverage, COVERAGE_CAP),
+          state: getInventoryState(stock, minimum_stock),
+        };
+      })
+      .sort((a, b) => a.coverage - b.coverage);
   }, [materials]);
 
   const stats = useMemo(() => {
@@ -93,14 +114,11 @@ export default function InventoryStatus() {
     };
   }, [chartData]);
 
-  const maxStock = useMemo(() => {
-    const highest = Math.max(...chartData.map((item) => item.stock), 0);
+  // Recorta la escala para que un material muy surtido no aplaste al resto.
+  const maxCoverage = useMemo(() => {
+    const highest = Math.max(...chartData.map((item) => item.barValue), 0);
 
-    // Normalmente trabajamos con un máximo visual de 120.
-    // Si existe algo mayor, ampliamos automáticamente.
-    if (highest <= 120) return 120;
-
-    return Math.ceil(highest / 20) * 20;
+    return Math.max(Math.ceil(highest / 50) * 50, 150);
   }, [chartData]);
 
   const getBarColor = (state: InventoryState) => {
@@ -186,89 +204,121 @@ export default function InventoryStatus() {
           <ResponsiveContainer width="100%" height="100%" minHeight={220}>
             <BarChart
               data={chartData}
-              margin={{
-                top: 20,
-                right: 15,
-                left: 0,
-                bottom: 35,
-              }}
-              barCategoryGap="25%"
+              layout="vertical"
+              margin={{ top: 14, right: 48, left: 4, bottom: 6 }}
+              barCategoryGap="22%"
             >
               <CartesianGrid
-                vertical={false}
+                horizontal={false}
                 stroke="rgba(249,115,22,0.08)"
-                strokeDasharray="4 4"
               />
 
               <XAxis
-                dataKey="name"
+                type="number"
+                domain={[0, maxCoverage]}
+                allowDataOverflow
                 axisLine={false}
                 tickLine={false}
-                interval={0}
-                height={50}
-                tick={{
-                  fill: "#71717a",
-                  fontSize: 10,
-                }}
-                tickFormatter={(value) => {
-                  const text = String(value);
-
-                  return text.length > 11
-                    ? `${text.substring(0, 11)}...`
-                    : text;
-                }}
+                tick={{ fill: "#71717a", fontSize: 10 }}
+                tickFormatter={(value) => `${value}%`}
               />
 
               <YAxis
-                domain={[0, maxStock]}
+                type="category"
+                dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                allowDecimals={false}
-                width={30}
-                tick={{
-                  fill: "#71717a",
-                  fontSize: 10,
+                width={124}
+                interval={0}
+                // Recharts parte el texto en varias líneas y con muchos
+                // materiales los nombres se solapan: se fuerza una sola línea.
+                tick={({ x, y, payload }) => {
+                  const text = String(payload.value);
+
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      dy={3}
+                      textAnchor="end"
+                      fill="#a1a1aa"
+                      fontSize={10}
+                    >
+                      {text.length > 19 ? `${text.substring(0, 19)}…` : text}
+                    </text>
+                  );
+                }}
+              />
+
+              {/* El mínimo es el umbral de reposición: a la izquierda, falta material. */}
+              <ReferenceLine
+                x={100}
+                stroke="#eab308"
+                strokeDasharray="4 4"
+                label={{
+                  value: "mínimo",
+                  position: "insideTopRight",
+                  fill: "#eab308",
+                  fontSize: 9,
+                  offset: 8,
                 }}
               />
 
               <Tooltip
-                cursor={{
-                  fill: "rgba(249,115,22,0.05)",
+                cursor={{ fill: "rgba(249,115,22,0.05)" }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+
+                  const item = payload[0].payload as ChartMaterial;
+
+                  const labels: Record<InventoryState, string> = {
+                    normal: "Stock normal",
+                    bajo: "Stock bajo",
+                    agotado: "Agotado",
+                  };
+
+                  return (
+                    <div className="rounded-xl border border-orange-500/25 bg-[#16120F] px-3 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                      <p className="mb-1.5 text-xs font-semibold text-white">
+                        {item.name}
+                      </p>
+
+                      <p className="text-[11px] text-zinc-400">
+                        Disponible:{" "}
+                        <span className="font-semibold text-white">
+                          {item.stock} {item.unit}
+                        </span>
+                      </p>
+
+                      <p className="text-[11px] text-zinc-400">
+                        Mínimo:{" "}
+                        <span className="font-semibold text-white">
+                          {item.minimum_stock} {item.unit}
+                        </span>
+                      </p>
+
+                      <p
+                        className="mt-1.5 text-[11px] font-bold"
+                        style={{ color: getBarColor(item.state) }}
+                      >
+                        {labels[item.state]} · {item.coverage}% del mínimo
+                      </p>
+                    </div>
+                  );
                 }}
-                contentStyle={{
-                  background: "#16120F",
-                  border: "1px solid rgba(249,115,22,0.25)",
-                  borderRadius: "12px",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-                }}
-                labelStyle={{
-                  color: "#ffffff",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  color: "#fb923c",
-                  fontSize: 12,
-                }}
-                formatter={(value) => [`${value}`, "Stock actual"]}
               />
 
-              <Bar
-                dataKey="stock"
-                radius={[7, 7, 2, 2]}
-                maxBarSize={42}
-                minPointSize={3}
-              >
+              <Bar dataKey="barValue" radius={[2, 7, 7, 2]} maxBarSize={18}>
                 {chartData.map((item) => (
                   <Cell key={item.id} fill={getBarColor(item.state)} />
                 ))}
 
                 <LabelList
-                  dataKey="stock"
-                  position="top"
+                  dataKey="coverage"
+                  position="right"
                   fill="#a1a1aa"
                   fontSize={9}
+                  formatter={(value) => `${value ?? 0}%`}
                 />
               </Bar>
             </BarChart>

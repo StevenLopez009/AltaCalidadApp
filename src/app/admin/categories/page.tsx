@@ -14,6 +14,8 @@ import {
 import { CategoryForm } from "@/src/modules/admin/components/CategoryForm";
 import { ServiceForm } from "@/src/modules/services/components/ServiceForm";
 import MaterialForm from "../materials/components/MaterialForm";
+import MaterialsManager from "@/src/modules/materials/components/MaterialsManager";
+import ServicesManager from "@/src/modules/services/components/ServicesManager";
 
 type FormType = "category" | "service" | "material" | null;
 
@@ -25,7 +27,7 @@ export default function CategoriesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0B0914] px-4 py-6 sm:px-6">
+    <main className="py-6">
       <div className="mx-auto w-full max-w-5xl">
         {/* HEADER */}
         <header className="mb-8">
@@ -370,6 +372,52 @@ export default function CategoriesPage() {
             </div>
           </section>
         </div>
+
+        {/* ================= LISTADOS ================= */}
+
+        <section className="mt-8 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015]">
+          <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-4 sm:px-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+              <Boxes className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-bold text-white">
+                Materiales registrados
+              </h2>
+
+              <p className="text-[11px] text-zinc-500">
+                Edita el inventario o elimina materiales sin uso
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            <MaterialsManager />
+          </div>
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.015]">
+          <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-4 sm:px-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-bold text-white">
+                Servicios registrados
+              </h2>
+
+              <p className="text-[11px] text-zinc-500">
+                Ajusta precios y unidades o elimina servicios sin pedidos
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            <ServicesManager />
+          </div>
+        </section>
 
         {/* FOOTER INFO */}
         <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-zinc-700">
