@@ -7,7 +7,10 @@ import {
 
 import { NextResponse } from "next/server";
 
-import type { PaymentMethod } from "@/src/modules/finance/repositories/finance.repositories";
+import type {
+  DigitalProvider,
+  PaymentMethod,
+} from "@/src/modules/finance/repositories/finance.repositories";
 
 interface Props {
   params: Promise<{
@@ -211,6 +214,51 @@ export async function PATCH(request: Request, { params }: Props) {
         );
       }
 
+      // ------------------------------------------------------
+      // VALIDAR PROVEEDOR DIGITAL
+      // ------------------------------------------------------
+
+      const digitalProvider = (body.digital_provider ??
+        null) as DigitalProvider | null;
+
+      if (
+        paymentMethod === "digital" &&
+        digitalProvider !== null &&
+        digitalProvider !== "nequi" &&
+        digitalProvider !== "daviplata" &&
+        digitalProvider !== "banco"
+      ) {
+        return NextResponse.json(
+          {
+            message: "El proveedor de pago digital no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      // ------------------------------------------------------
+      // VALIDAR COMPROBANTE
+      // ------------------------------------------------------
+
+      // Solo se acepta la ruta que devuelve /api/upload: evita guardar enlaces
+      // externos arbitrarios en un campo que luego se renderiza como imagen.
+      const receiptFile = body.receipt_file
+        ? String(body.receipt_file)
+        : null;
+
+      if (receiptFile !== null && !/^\/uploads\/[\w.-]+$/.test(receiptFile)) {
+        return NextResponse.json(
+          {
+            message: "El comprobante de pago no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
       try {
         // ----------------------------------------------------
         // EL SERVICE SE ENCARGA DE:
@@ -227,6 +275,8 @@ export async function PATCH(request: Request, { params }: Props) {
           orderId,
           amountPaid,
           paymentMethod,
+          digitalProvider,
+          receiptFile,
         );
 
         return NextResponse.json({

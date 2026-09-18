@@ -140,6 +140,8 @@ CREATE TABLE IF NOT EXISTS order_payments (
   order_id INT UNSIGNED NOT NULL,
   amount DECIMAL(12, 2) NOT NULL,
   payment_method ENUM('efectivo', 'digital') NOT NULL DEFAULT 'efectivo',
+  digital_provider ENUM('nequi', 'daviplata', 'banco') NULL,
+  receipt_file VARCHAR(255) NULL,
   notes VARCHAR(255) NULL,
   paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_order_payments_order (order_id),

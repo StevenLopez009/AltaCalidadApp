@@ -66,6 +66,7 @@ type CustomerType = "empresa" | "usuario";
 type PaymentOption = "ninguno" | "total" | "parcial";
 
 type PaymentMethod = "efectivo" | "digital";
+type DigitalProvider = "nequi" | "daviplata" | "banco";
 
 export default function OrderForm() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -86,6 +87,10 @@ export default function OrderForm() {
   const [paymentOption, setPaymentOption] = useState<PaymentOption>("ninguno");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+  const [digitalProvider, setDigitalProvider] =
+    useState<DigitalProvider>("nequi");
+  const [paymentReceipt, setPaymentReceipt] = useState<string | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   const nextUid = useRef(1);
 
@@ -461,6 +466,39 @@ export default function OrderForm() {
   // CREAR PEDIDO
   // ============================================================
 
+  async function handleReceiptChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+      setUploadingReceipt(true);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message ?? "No se pudo subir el comprobante");
+        return;
+      }
+
+      setPaymentReceipt(data.url);
+    } catch (error) {
+      console.error("Error subiendo el comprobante:", error);
+
+      alert("Error subiendo el comprobante");
+    } finally {
+      setUploadingReceipt(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -611,6 +649,14 @@ export default function OrderForm() {
         formData.append("paymentAmount", String(paidAmount));
 
         formData.append("paymentMethod", paymentMethod);
+
+        if (paymentMethod === "digital") {
+          formData.append("digitalProvider", digitalProvider);
+        }
+
+        if (paymentOption === "total" && paymentReceipt) {
+          formData.append("paymentReceipt", paymentReceipt);
+        }
       }
 
       // --------------------------------------------------------
@@ -682,6 +728,10 @@ export default function OrderForm() {
     setPaymentAmount("");
 
     setPaymentMethod("efectivo");
+
+    setDigitalProvider("nequi");
+
+    setPaymentReceipt(null);
   }
 
   // ============================================================
@@ -1437,6 +1487,81 @@ export default function OrderForm() {
                             </button>
                           ))}
                         </div>
+
+                        {paymentMethod === "digital" && (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {(
+                              [
+                                { value: "nequi", label: "Nequi" },
+                                { value: "daviplata", label: "Daviplata" },
+                                { value: "banco", label: "Banco" },
+                              ] as const
+                            ).map((provider) => (
+                              <button
+                                key={provider.value}
+                                type="button"
+                                onClick={() =>
+                                  setDigitalProvider(provider.value)
+                                }
+                                className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold transition ${
+                                  digitalProvider === provider.value
+                                    ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+                                    : "border-orange-500/10 bg-black/20 text-zinc-500 hover:text-zinc-300"
+                                }`}
+                              >
+                                {provider.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {paymentOption === "total" && (
+                          <div>
+                            <label className="mb-1.5 block text-[11px] text-zinc-500">
+                              Comprobante de pago (opcional)
+                            </label>
+
+                            {paymentReceipt ? (
+                              <div className="flex items-center gap-2 rounded-xl border border-orange-500/15 bg-black/30 p-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={paymentReceipt}
+                                  alt="Comprobante de pago"
+                                  className="h-12 w-12 rounded-lg object-cover"
+                                />
+
+                                <span className="flex-1 truncate text-[11px] text-zinc-400">
+                                  Comprobante adjuntado
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentReceipt(null)}
+                                  className="rounded-lg p-1.5 text-zinc-500 transition hover:text-red-400"
+                                  aria-label="Quitar comprobante"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-orange-500/20 bg-black/20 px-3 py-3 text-[11px] font-semibold text-zinc-500 transition hover:text-zinc-300">
+                                <Upload className="h-4 w-4" />
+
+                                {uploadingReceipt
+                                  ? "Subiendo..."
+                                  : "Adjuntar comprobante"}
+
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleReceiptChange}
+                                  disabled={uploadingReceipt}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+                          </div>
+                        )}
 
                         <div className="flex justify-between rounded-xl bg-black/25 px-3 py-2.5 text-xs">
                           <span className="text-zinc-500">Queda debiendo</span>

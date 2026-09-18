@@ -9,6 +9,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# El host de producción tiene 512 MB de RAM: sin acotar el heap, V8 crece hasta
+# varios GB sobre swap y el build se queda en thrashing sin avanzar.
+ENV SKIP_TYPE_CHECK=1
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=2048
+
 RUN npm run build
 
 FROM node:20-alpine AS runner

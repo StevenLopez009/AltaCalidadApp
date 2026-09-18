@@ -24,6 +24,12 @@
 .DS_Store
 *.pem
 
+# imagenes subidas en runtime: viven en el volumen del servidor, no en el repo.
+# Se conserva la carpeta porque docker-compose la monta y, si no existe, Docker
+# la recrea como root y el contenedor (uid 1001) pierde permiso de escritura.
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -3,6 +3,7 @@ import {
   getFinanceSummary,
   getPayments,
   getReceivables,
+  type DigitalProvider,
   type FinanceFilters,
   type PaymentMethod,
 } from "../repositories/finance.repositories";
@@ -104,6 +105,8 @@ export async function getFinanceReport(filters: FinanceFilters) {
       orderId: Number(row.order_id),
       amount: Number(row.amount) || 0,
       paymentMethod: row.payment_method as PaymentMethod,
+      digitalProvider: row.digital_provider as DigitalProvider | null,
+      receiptFile: row.receipt_file as string | null,
       notes: row.notes as string | null,
       paidAt: row.paid_at as Date,
       customerName: (row.customer_name as string | null) ?? "Sin cliente",
