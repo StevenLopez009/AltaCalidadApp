@@ -25,8 +25,15 @@ const CORNER_RADIUS = 4;
 const STACK_GAP = 2;
 
 type PaymentMethod = "efectivo" | "digital";
+type DigitalProvider = "nequi" | "daviplata" | "banco";
 
 type MethodFilter = PaymentMethod | "todos";
+
+const DIGITAL_PROVIDER_LABELS: Record<DigitalProvider, string> = {
+  nequi: "Nequi",
+  daviplata: "Daviplata",
+  banco: "Banco",
+};
 
 interface DayPoint {
   day: string;
@@ -41,6 +48,8 @@ interface Movement {
   orderId: number;
   amount: number;
   paymentMethod: PaymentMethod;
+  digitalProvider: DigitalProvider | null;
+  receiptFile: string | null;
   notes: string | null;
   paidAt: string;
   customerName: string;
@@ -652,13 +661,14 @@ function MovementsTable({ movements }: { movements: Movement[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-left">
+      <table className="w-full min-w-[660px] text-left">
         <thead>
           <tr className="border-b border-white/[0.07] text-[10px] uppercase tracking-wider text-zinc-600">
             <th className="pb-2 font-medium">Fecha</th>
             <th className="pb-2 font-medium">Cliente</th>
             <th className="pb-2 font-medium">Pedido</th>
             <th className="pb-2 font-medium">Método</th>
+            <th className="pb-2 font-medium">Comprobante</th>
             <th className="pb-2 text-right font-medium">Monto</th>
           </tr>
         </thead>
@@ -690,8 +700,25 @@ function MovementsTable({ movements }: { movements: Movement[] }) {
                   />
                   {movement.paymentMethod === "efectivo"
                     ? "Efectivo"
-                    : "Digital"}
+                    : movement.digitalProvider
+                      ? DIGITAL_PROVIDER_LABELS[movement.digitalProvider]
+                      : "Digital"}
                 </span>
+              </td>
+
+              <td className="py-2.5">
+                {movement.receiptFile ? (
+                  <a
+                    href={movement.receiptFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FFD21C] underline-offset-2 hover:underline"
+                  >
+                    Ver
+                  </a>
+                ) : (
+                  <span className="text-zinc-600">—</span>
+                )}
               </td>
 
               <td className="py-2.5 text-right font-semibold text-[#f7f4ed]">

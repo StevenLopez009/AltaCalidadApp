@@ -5,6 +5,7 @@ import {
   getProductionOrders,
   getOrdersForDeliveryDate,
 } from "@/src/modules/order/services/orders.service";
+import type { DigitalProvider } from "@/src/modules/finance/repositories/finance.repositories";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -120,9 +121,15 @@ export async function POST(request: Request) {
 
     const paymentAmountRaw = formData.get("paymentAmount");
     const paymentMethodRaw = formData.get("paymentMethod");
+    const digitalProviderRaw = formData.get("digitalProvider");
+    const paymentReceiptRaw = formData.get("paymentReceipt");
 
-    let payment: { amount: number; method: "efectivo" | "digital" } | null =
-      null;
+    let payment: {
+      amount: number;
+      method: "efectivo" | "digital";
+      digitalProvider?: DigitalProvider | null;
+      receiptFile?: string | null;
+    } | null = null;
 
     if (paymentAmountRaw) {
       const amount = Number(paymentAmountRaw);
@@ -151,7 +158,48 @@ export async function POST(request: Request) {
         );
       }
 
-      payment = { amount, method };
+      const digitalProvider = digitalProviderRaw
+        ? String(digitalProviderRaw)
+        : null;
+
+      if (
+        method === "digital" &&
+        digitalProvider !== null &&
+        digitalProvider !== "nequi" &&
+        digitalProvider !== "daviplata" &&
+        digitalProvider !== "banco"
+      ) {
+        return NextResponse.json(
+          {
+            message: "El proveedor de pago digital no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      // Solo se acepta la ruta que devuelve /api/upload: evita guardar enlaces
+      // externos arbitrarios en un campo que luego se renderiza como imagen.
+      const receiptFile = paymentReceiptRaw ? String(paymentReceiptRaw) : null;
+
+      if (receiptFile !== null && !/^\/uploads\/[\w.-]+$/.test(receiptFile)) {
+        return NextResponse.json(
+          {
+            message: "El comprobante de pago no es válido",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      payment = {
+        amount,
+        method,
+        digitalProvider: digitalProvider as DigitalProvider | null,
+        receiptFile,
+      };
     }
 
     const order = await createNewOrder({

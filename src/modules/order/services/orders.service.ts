@@ -17,6 +17,7 @@ import { db } from "@/src/shared/lib/db";
 import { decreaseMaterialStock } from "../../materials/repositories/materials.repositories";
 import {
   createPayment,
+  type DigitalProvider,
   type PaymentMethod,
 } from "../../finance/repositories/finance.repositories";
 import {
@@ -54,6 +55,8 @@ interface CreateNewOrderData {
   payment?: {
     amount: number;
     method: PaymentMethod;
+    digitalProvider?: DigitalProvider | null;
+    receiptFile?: string | null;
   } | null;
 }
 
@@ -417,6 +420,8 @@ export async function createNewOrder(data: CreateNewOrderData) {
         orderId,
         amount,
         paymentMethod: data.payment.method,
+        digitalProvider: data.payment.digitalProvider,
+        receiptFile: data.payment.receiptFile,
       });
     }
 
@@ -540,6 +545,8 @@ export async function changeOrderPayment(
   id: number,
   amountPaid: number,
   paymentMethod: PaymentMethod = "efectivo",
+  digitalProvider?: DigitalProvider | null,
+  receiptFile?: string | null,
 ) {
   // ========================================================
   // OBTENER PEDIDO
@@ -601,6 +608,8 @@ export async function changeOrderPayment(
       orderId: id,
       amount: amountPaid,
       paymentMethod,
+      digitalProvider,
+      receiptFile,
     });
 
     await connection.commit();

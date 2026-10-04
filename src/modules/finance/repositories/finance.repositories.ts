@@ -6,11 +6,14 @@ import type {
 } from "mysql2/promise";
 
 export type PaymentMethod = "efectivo" | "digital";
+export type DigitalProvider = "nequi" | "daviplata" | "banco";
 
 export interface CreatePaymentData {
   orderId: number;
   amount: number;
   paymentMethod: PaymentMethod;
+  digitalProvider?: DigitalProvider | null;
+  receiptFile?: string | null;
   notes?: string | null;
 }
 
@@ -31,11 +34,20 @@ export async function createPayment(
         order_id,
         amount,
         payment_method,
+        digital_provider,
+        receipt_file,
         notes
       )
-      VALUES (?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?)
     `,
-    [data.orderId, data.amount, data.paymentMethod, data.notes ?? null],
+    [
+      data.orderId,
+      data.amount,
+      data.paymentMethod,
+      data.paymentMethod === "digital" ? (data.digitalProvider ?? null) : null,
+      data.receiptFile ?? null,
+      data.notes ?? null,
+    ],
   );
 
   return result;
@@ -106,6 +118,8 @@ export async function getPayments(filters: FinanceFilters, limit: number) {
         p.order_id,
         p.amount,
         p.payment_method,
+        p.digital_provider,
+        p.receipt_file,
         p.notes,
         p.paid_at,
         o.customer_type,
@@ -146,6 +160,8 @@ export async function getPaymentsByOrder(orderId: number) {
         id,
         amount,
         payment_method,
+        digital_provider,
+        receipt_file,
         notes,
         paid_at
       FROM order_payments

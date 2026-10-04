@@ -10,21 +10,12 @@ services:
       MYSQL_DATABASE: ${DATABASE_NAME}
       TZ: America/Bogota
     ports:
-      - "3310:3306"
+      - "3407:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-uroot",
-          "-p${DATABASE_PASSWORD}",
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${DATABASE_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -44,7 +35,7 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "3002:3000"
+      - "3500:3000"
     volumes:
       - ./public/uploads:/app/public/uploads
 
