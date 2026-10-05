@@ -8,11 +8,8 @@ import ProductionQueue from "./components/ProductionQueue";
 import OrdersOverview from "./components/OrdersOverview";
 import PendingOrdersChart from "./components/PendingOrdersChart";
 import HeaderCarouselUpload from "./components/HeaderCarouselUpload";
-import HeroTitleEditor from "./components/HeroTitleEditor";
 import PortfolioUpload from "./components/PortfolioUpload";
 import InventoryStatus from "../../../modules/materials/components/InventoryStatus";
-import FinanceControl from "../../../modules/finance/components/FinanceControl";
-import ProfitControl from "../../../modules/finance/components/ProfitControl";
 
 import { Building2, Package, ShoppingCart } from "lucide-react";
 
@@ -66,7 +63,6 @@ export default function AdminDashboard() {
                     </span>
                   </div>
 
-                  <HeroTitleEditor />
                 </div>
 
                 <div className="mt-10 flex items-center gap-4">
@@ -207,33 +203,6 @@ export default function AdminDashboard() {
               <OrdersOverview />
             </div>
           </section>
-          {/* ===================================================== */}
-          {/* FINANZAS */}
-          {/* ===================================================== */}
-          <section className="mb-6">
-            <div className="mb-3 flex items-end justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FFD21C]">
-                  05 / DINERO
-                </span>
-
-                <h2 className="mt-1 text-3xl font-black uppercase tracking-tight">
-                  Finanzas
-                </h2>
-              </div>
-
-              <div className="hidden h-[2px] w-32 bg-gradient-to-r from-[#FFD21C] via-[#FF7A00] to-[#FF3030] md:block" />
-            </div>
-
-            <div className="overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
-              <FinanceControl />
-            </div>
-
-            <div className="mt-4 overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
-              <ProfitControl />
-            </div>
-          </section>
-
           {/* ===================================================== */}
           {/* OPERACIÓN */}
           {/* ===================================================== */}

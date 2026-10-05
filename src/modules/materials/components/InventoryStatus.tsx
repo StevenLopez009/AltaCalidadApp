@@ -82,11 +82,13 @@ export default function InventoryStatus() {
         // Los materiales se miden en unidades distintas (m2, litros, unidades),
         // así que comparar el stock en bruto no dice nada. La cobertura sobre
         // el mínimo sí es comparable: 100% = justo en el punto de reposición.
+        // El porcentaje de avance queda en [0, 100]: 100% = justo al mínimo
+        // (o material disponible cuando no hay mínimo definido), nunca más.
         const coverage =
           minimum_stock > 0
-            ? Math.round((stock / minimum_stock) * 100)
+            ? Math.min(100, Math.max(0, Math.round((stock / minimum_stock) * 100)))
             : stock > 0
-              ? 999
+              ? 100
               : 0;
 
         return {

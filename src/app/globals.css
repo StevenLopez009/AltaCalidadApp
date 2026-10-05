@@ -24,3 +24,21 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Las opciones de los <select> heredan el tema claro del navegador salvo
+   que se indique lo contrario: fuerza menús desplegables oscuros y legibles. */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+select option:hover,
+select option:checked,
+select option:focus {
+  background-color: #1f1f1f;
+  color: #ffffff;
+}

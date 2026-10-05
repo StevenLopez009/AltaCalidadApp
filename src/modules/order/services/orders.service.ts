@@ -17,6 +17,7 @@ import { db } from "@/src/shared/lib/db";
 import { decreaseMaterialStock } from "../../materials/repositories/materials.repositories";
 import {
   createPayment,
+  getPaymentsByOrderId,
   type DigitalProvider,
   type PaymentMethod,
 } from "../../finance/repositories/finance.repositories";
@@ -474,12 +475,17 @@ export async function getOrderDetails(id: number) {
 
   const addons = await getAddonsForOrder(id);
 
+  const payments = await getPaymentsByOrderId(id);
+
   const firstRow = rows[0] as any;
 
   return {
     id: firstRow.id,
     companyId: firstRow.company_id,
     companyName: firstRow.company_name,
+    customerType: firstRow.customer_type,
+    customerName: firstRow.customer_name,
+    customerPhone: firstRow.customer_phone,
     deliveryDate: firstRow.delivery_date,
     status: firstRow.status,
     paymentStatus: firstRow.payment_status,
@@ -493,6 +499,24 @@ export async function getOrderDetails(id: number) {
     createdAt: firstRow.created_at,
     updatedAt: firstRow.updated_at,
 
+    payments: payments.map(
+      (payment: {
+        id: number;
+        amount: number | string;
+        payment_method: string;
+        digital_provider: string | null;
+        receipt_file: string | null;
+        paid_at: string;
+      }) => ({
+        id: payment.id,
+        amount: Number(payment.amount) || 0,
+        paymentMethod: payment.payment_method,
+        digitalProvider: payment.digital_provider,
+        receiptFile: payment.receipt_file,
+        paidAt: payment.paid_at,
+      }),
+    ),
+
     items: rows
       .filter((row: any) => row.item_id !== null)
       .map((row: any) => ({
@@ -500,6 +524,8 @@ export async function getOrderDetails(id: number) {
         categoryId: row.category_id,
         serviceId: row.service_id,
         serviceName: row.service_name,
+        categoryName: row.category_name,
+        serviceImage: row.service_image,
         quantity: row.quantity,
         width: row.width,
         height: row.height,

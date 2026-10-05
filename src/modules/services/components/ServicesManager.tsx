@@ -57,6 +57,7 @@ export default function ServicesManager() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
+  const [draftPreview, setDraftPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -117,6 +118,7 @@ export default function ServicesManager() {
   function startEdit(service: ServiceRow) {
     setEditingId(service.id);
     setError(null);
+    setDraftPreview(service.image ?? null);
 
     setDraft({
       categoryId: String(service.category_id ?? ""),
@@ -128,6 +130,34 @@ export default function ServicesManager() {
       price: String(service.price),
       image: service.image ?? "",
     });
+  }
+
+  async function handleDraftImageChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setDraftPreview(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      alert("No se pudo subir la imagen");
+      setDraftPreview(draft.image || null);
+      return;
+    }
+
+    const data = await response.json();
+
+    setDraft({ ...draft, image: data.url });
   }
 
   async function handleSave(id: number) {
@@ -157,6 +187,7 @@ export default function ServicesManager() {
       }
 
       setEditingId(null);
+      setDraftPreview(null);
       await load();
     } catch (saveError) {
       setError(
@@ -343,6 +374,27 @@ export default function ServicesManager() {
                         className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-orange-400/50"
                       />
                     </label>
+
+                    <div className="text-[11px] text-zinc-500 sm:col-span-2">
+                      Imagen
+                      <div className="mt-1 rounded-lg border border-dashed border-white/10 bg-black/40 p-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleDraftImageChange}
+                          className="block w-full text-xs text-white/50 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-orange-400 hover:file:bg-orange-500/20"
+                        />
+                      </div>
+                      {(draftPreview || draft.image) && (
+                        <div className="mt-2 overflow-hidden rounded-lg border border-white/10">
+                          <img
+                            src={draftPreview || draft.image}
+                            alt="Vista previa"
+                            className="h-28 w-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <ServiceAddons serviceId={service.id} onChange={load} />
@@ -360,7 +412,10 @@ export default function ServicesManager() {
 
                     <button
                       type="button"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => {
+                        setEditingId(null);
+                        setDraftPreview(null);
+                      }}
                       disabled={saving}
                       className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-400 transition hover:text-white disabled:opacity-50"
                     >

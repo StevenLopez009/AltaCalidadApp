@@ -53,6 +53,20 @@ export async function createPayment(
   return result;
 }
 
+export async function getPaymentsByOrderId(orderId: number) {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `
+      SELECT id, order_id, amount, payment_method, digital_provider, receipt_file, paid_at
+      FROM order_payments
+      WHERE order_id = ?
+      ORDER BY paid_at ASC, id ASC
+    `,
+    [orderId],
+  );
+
+  return rows;
+}
+
 // El rango es [from, to] inclusive por día: se compara contra la fecha de paid_at.
 function buildRangeConditions(filters: FinanceFilters) {
   const conditions = ["DATE(p.paid_at) BETWEEN ? AND ?"];

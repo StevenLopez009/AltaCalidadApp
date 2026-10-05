@@ -36,6 +36,7 @@ interface Service {
   name: string;
   unit: string;
   price: number;
+  image?: string | null;
 }
 
 interface Addon {
@@ -1104,10 +1105,18 @@ export default function OrderForm() {
 
                         {/* ICONO */}
 
-                        <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-yellow-400/[0.04] via-orange-500/[0.03] to-red-500/[0.04]">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 via-orange-500 to-red-500 text-white shadow-[0_0_30px_rgba(255,122,0,0.25)] transition duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-[0_0_40px_rgba(255,87,34,0.4)]">
-                            <Package size={30} />
-                          </div>
+                        <div className="relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-yellow-400/[0.04] via-orange-500/[0.03] to-red-500/[0.04]">
+                          {service.image ? (
+                            <img
+                              src={service.image}
+                              alt={service.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 via-orange-500 to-red-500 text-white shadow-[0_0_30px_rgba(255,122,0,0.25)] transition duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-[0_0_40px_rgba(255,87,34,0.4)]">
+                              <Package size={30} />
+                            </div>
+                          )}
 
                           {alreadyAdded && (
                             <div

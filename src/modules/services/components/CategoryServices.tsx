@@ -840,10 +840,18 @@ export function CategoryServices({ category, services }: Props) {
 
                       {/* ICONO */}
 
-                      <div className="relative flex h-36 items-center justify-center border-b border-white/[0.05] bg-gradient-to-br from-yellow-400/[0.03] via-orange-500/[0.03] to-red-500/[0.04]">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 via-orange-500 to-red-500 text-white shadow-[0_0_30px_rgba(255,122,0,0.2)] transition duration-300 group-hover:scale-110">
-                          <Package size={30} />
-                        </div>
+                      <div className="relative flex h-36 items-center justify-center overflow-hidden border-b border-white/[0.05] bg-gradient-to-br from-yellow-400/[0.03] via-orange-500/[0.03] to-red-500/[0.04]">
+                        {service.image ? (
+                          <img
+                            src={service.image}
+                            alt={service.name}
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 via-orange-500 to-red-500 text-white shadow-[0_0_30px_rgba(255,122,0,0.2)] transition duration-300 group-hover:scale-110">
+                            <Package size={30} />
+                          </div>
+                        )}
                       </div>
 
                       {/* INFORMACIÓN */}

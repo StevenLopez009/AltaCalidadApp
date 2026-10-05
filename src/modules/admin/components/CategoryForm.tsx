@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FolderPlus, Layers3, Trash2 } from "lucide-react";
+import { FolderPlus, Layers3, Pencil, Trash2 } from "lucide-react";
 
 interface Category {
   id: number;
@@ -20,6 +20,10 @@ export function CategoryForm() {
 
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
+    null,
+  );
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadCategories();
@@ -80,35 +84,100 @@ export function CategoryForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/categories", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const isEditing = editingCategoryId !== null;
+
+      const response = await fetch(
+        isEditing ? `/api/categories/${editingCategoryId}` : "/api/categories",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            image,
+          }),
         },
-        body: JSON.stringify({
-          name,
-          description,
-          image,
-        }),
-      });
+      );
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error("Error creando categoría");
+        throw new Error(data.message ?? "Error guardando categoría");
       }
 
       setName("");
       setDescription("");
       setImage("");
       setPreview("");
+      setEditingCategoryId(null);
 
       await loadCategories();
 
-      alert("Categoría creada correctamente");
+      alert(isEditing ? "Categoría actualizada" : "Categoría creada correctamente");
     } catch (error) {
       console.error(error);
-      alert("Error creando categoría");
+      alert(
+        error instanceof Error ? error.message : "Error guardando categoría",
+      );
     } finally {
       setLoading(false);
+    }
+  }
+
+  function startEdit(category: Category) {
+    setEditingCategoryId(category.id);
+    setName(category.name);
+    setDescription(category.description ?? "");
+    setImage(category.image ?? "");
+    setPreview(category.image ?? "");
+  }
+
+  function cancelEdit() {
+    setEditingCategoryId(null);
+    setName("");
+    setDescription("");
+    setImage("");
+    setPreview("");
+  }
+
+  async function handleDelete(category: Category) {
+    if (
+      !confirm(
+        `¿Eliminar la categoría "${category.name}"? Esta acción no se puede deshacer.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingId(category.id);
+
+      const response = await fetch(`/api/categories/${category.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Error eliminando categoría");
+      }
+
+      if (editingCategoryId === category.id) {
+        cancelEdit();
+      }
+
+      await loadCategories();
+
+      alert("Categoría eliminada");
+    } catch (error) {
+      console.error(error);
+      alert(
+        error instanceof Error ? error.message : "Error eliminando categoría",
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -133,10 +202,14 @@ export function CategoryForm() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white">Nueva categoría</h2>
+            <h2 className="text-xl font-bold text-white">
+              {editingCategoryId !== null ? "Editar categoría" : "Nueva categoría"}
+            </h2>
 
             <p className="text-sm text-white/40">
-              Agrega una nueva categoría al catálogo
+              {editingCategoryId !== null
+                ? "Modifica los datos de la categoría"
+                : "Agrega una nueva categoría al catálogo"}
             </p>
           </div>
         </div>
@@ -263,8 +336,22 @@ export function CategoryForm() {
               disabled:opacity-50
             "
           >
-            {loading ? "Guardando..." : "Crear categoría"}
+            {loading
+              ? "Guardando..."
+              : editingCategoryId !== null
+                ? "Guardar cambios"
+                : "Crear categoría"}
           </button>
+
+          {editingCategoryId !== null && (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="w-full rounded-xl border border-white/10 px-5 py-3 text-sm text-white/60 transition hover:bg-white/5"
+            >
+              Cancelar edición
+            </button>
+          )}
         </form>
       </div>
 
@@ -421,6 +508,25 @@ export function CategoryForm() {
                 >
                   #{category.id}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => startEdit(category)}
+                  className="rounded-lg border border-white/10 p-2 text-white/50 transition hover:border-orange-500/40 hover:text-orange-400"
+                  title="Editar"
+                >
+                  <Pencil size={15} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDelete(category)}
+                  disabled={deletingId === category.id}
+                  className="rounded-lg border border-white/10 p-2 text-white/50 transition hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                  title="Eliminar"
+                >
+                  <Trash2 size={15} />
+                </button>
               </div>
             ))}
           </div>
