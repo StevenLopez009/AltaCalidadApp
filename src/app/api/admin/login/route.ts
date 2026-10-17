@@ -2,6 +2,10 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { login } from "@/src/modules/auth/services/auth.service";
+import {
+  ADMIN_TOKEN_COOKIE,
+  useSecureCookie,
+} from "@/src/modules/auth/cookie";
 
 export async function POST(request: Request) {
   try {
@@ -25,9 +29,9 @@ export async function POST(request: Request) {
 
     const cookieStore = await cookies();
 
-    cookieStore.set("admin_token", token, {
+    cookieStore.set(ADMIN_TOKEN_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: useSecureCookie,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24, // 1 día

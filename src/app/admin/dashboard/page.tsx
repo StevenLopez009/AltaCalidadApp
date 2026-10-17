@@ -13,6 +13,7 @@ import PortfolioUpload from "./components/PortfolioUpload";
 import InventoryStatus from "../../../modules/materials/components/InventoryStatus";
 import FinanceControl from "../../../modules/finance/components/FinanceControl";
 import ProfitControl from "../../../modules/finance/components/ProfitControl";
+import ExpensesControl from "../../../modules/finance/components/ExpensesControl";
 
 import { Building2, Package, ShoppingCart } from "lucide-react";
 
@@ -231,6 +232,10 @@ export default function AdminDashboard() {
 
             <div className="mt-4 overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
               <ProfitControl />
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-2xl bg-[#171717] p-5 md:p-7">
+              <ExpensesControl />
             </div>
           </section>
 
