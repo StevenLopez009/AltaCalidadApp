@@ -3,17 +3,14 @@ import { PortfolioSection } from "../modules/home/components/PortafolioSection";
 import Link from "next/link";
 import { CarruselSection } from "../modules/home/components/CarruselSection";
 import { WhatsAppButton } from "../modules/home/components/WhatsAppButton";
-import { getHeroTitle } from "../modules/settings/services/settings.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const heroTitle = await getHeroTitle();
-
   return (
     <main className="min-h-screen bg-black text-white selection:bg-[#FF7A00] selection:text-white">
       {/* El Navbar es fixed, por lo que va por fuera o junto al carrusel sin saltos */}
-      <CarruselSection heroTitle={heroTitle} />
+      <CarruselSection />
       <ServicesSection />
       <PortfolioSection />
 

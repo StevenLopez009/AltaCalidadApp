@@ -13,6 +13,7 @@ import {
   Flame,
   Menu,
   X,
+  Wallet,
 } from "lucide-react";
 
 const menuItems = [
@@ -35,6 +36,11 @@ const menuItems = [
     label: "Crear Pedido",
     href: "/admin/orders",
     icon: ShoppingCart,
+  },
+  {
+    label: "Finanzas",
+    href: "/admin/finanzas",
+    icon: Wallet,
   },
 ];
 

@@ -8,6 +8,8 @@ interface OrderItem {
   categoryId: number;
   serviceId: number;
   serviceName: string;
+  categoryName: string | null;
+  serviceImage: string | null;
   quantity: number;
   width: number | null;
   height: number | null;
@@ -41,6 +43,18 @@ interface Order {
   designFile: string | null;
   observations: string | null;
   companyName: string;
+  customerType: "empresa" | "usuario" | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  createdAt: string;
+  payments: {
+    id: number;
+    amount: number;
+    paymentMethod: string;
+    digitalProvider: string | null;
+    receiptFile: string | null;
+    paidAt: string;
+  }[];
   items: OrderItem[];
 }
 
@@ -333,11 +347,38 @@ export default function OrderDetailsPage() {
 
         {/* INFORMACIÓN GENERAL */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {/* EMPRESA */}
+          {/* CLIENTE */}
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
-            <p className="text-xs text-zinc-500">Empresa</p>
+            <p className="text-xs text-zinc-500">
+              {order.customerType === "usuario" ? "Cliente" : "Empresa"}
+            </p>
 
-            <p className="mt-2 text-base font-semibold">{order.companyName}</p>
+            <p className="mt-2 text-base font-semibold">
+              {order.customerType === "usuario"
+                ? order.customerName || "—"
+                : order.companyName || "—"}
+            </p>
+
+            {order.customerType === "usuario" && order.customerPhone && (
+              <p className="mt-1 text-xs text-zinc-500">
+                {order.customerPhone}
+              </p>
+            )}
+          </div>
+
+          {/* FECHA DEL PEDIDO */}
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+            <p className="text-xs text-zinc-500">Fecha del pedido</p>
+
+            <p className="mt-2 text-base font-semibold">
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString("es-CO", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "—"}
+            </p>
           </div>
 
           {/* FECHA */}
@@ -401,25 +442,71 @@ export default function OrderDetailsPage() {
         <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
           <h2 className="mb-5 text-lg font-semibold text-white">Servicios</h2>
 
+          {order.observations && (
+            <p className="mb-4 rounded-xl border border-white/[0.06] bg-[#121215] p-3 text-xs text-zinc-400">
+              Observaciones del cliente: {order.observations}
+            </p>
+          )}
+
+          {order.designFile && (
+            <div className="mb-4">
+              <p className="text-[11px] text-zinc-500">
+                Archivo de diseño del pedido:
+              </p>
+
+              <a
+                href={order.designFile}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 block max-w-[260px] overflow-hidden rounded-lg border border-white/[0.08]"
+              >
+                <img
+                  src={order.designFile}
+                  alt="Archivo de diseño del pedido"
+                  className="h-28 w-full object-cover"
+                />
+              </a>
+            </div>
+          )}
+
           <div className="space-y-3">
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="rounded-xl border border-white/[0.06] bg-[#121215] p-4"
+                className="flex gap-4 rounded-xl border border-white/[0.06] bg-[#121215] p-4"
               >
-                <div className="flex justify-between">
+                <div className="flex flex-1 justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-white">
                       {item.serviceName}
                     </p>
 
+                    {item.categoryName && (
+                      <p className="mt-0.5 text-[11px] text-orange-300/80">
+                        {item.categoryName}
+                      </p>
+                    )}
+
                     <p className="mt-1 text-xs text-zinc-500">
                       Cantidad: {item.quantity}
                     </p>
 
-                    {item.width && item.height && (
+                    <p className="text-xs text-zinc-500">
+                      Precio unitario: $
+                      {Number(item.unitPrice).toLocaleString("es-CO")} /{" "}
+                      {item.unit}
+                    </p>
+
+                    {(item.width || item.height) && (
                       <p className="text-xs text-zinc-500">
-                        Medidas: {item.width} × {item.height}
+                        Medidas: {item.width ?? "—"} × {item.height ?? "—"}{" "}
+                        {item.unit === "m2" ? "m" : ""}
+                      </p>
+                    )}
+
+                    {item.observations && (
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Observaciones: {item.observations}
                       </p>
                     )}
 
@@ -447,6 +534,39 @@ export default function OrderDetailsPage() {
                   <p className="text-sm font-semibold text-orange-300">
                     ${Number(item.subtotal).toLocaleString("es-CO")}
                   </p>
+                </div>
+
+                {/* IMÁGENES A LA DERECHA: servicio + archivo a imprimir */}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <div className="h-20 w-20 overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.03]">
+                    {item.serviceImage ? (
+                      <img
+                        src={item.serviceImage}
+                        alt={item.serviceName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] text-zinc-600">
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
+
+                  {item.designFile && (
+                    <a
+                      href={item.designFile}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Imagen a imprimir"
+                      className="block h-20 w-20 overflow-hidden rounded-lg border border-orange-500/30"
+                    >
+                      <img
+                        src={item.designFile}
+                        alt={`Imagen a imprimir de ${item.serviceName}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
@@ -510,6 +630,35 @@ export default function OrderDetailsPage() {
                 </span>
               </div>
             </div>
+
+            {/* COMPROBANTES DE PAGO */}
+            {(order.payments ?? []).some((p) => p.receiptFile) && (
+              <div className="mt-4 border-t border-white/[0.06] pt-4">
+                <p className="mb-2 text-xs text-zinc-500">
+                  Comprobante de pago
+                </p>
+
+                <ul className="space-y-1">
+                  {order.payments
+                    .filter((p) => p.receiptFile)
+                    .map((p) => (
+                      <li key={p.id}>
+                        <a
+                          href={p.receiptFile!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-orange-300 underline underline-offset-2 hover:text-orange-200"
+                        >
+                          Ver comprobante #{p.id} — $
+                          {Number(p.amount).toLocaleString("es-CO")} (
+                          {p.paymentMethod}
+                          {p.digitalProvider ? ` · ${p.digitalProvider}` : ""})
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* PAGOS */}

@@ -35,17 +35,7 @@ const fallbackSlides: CarouselImage[] = [
   },
 ];
 
-interface CarruselSectionProps {
-  /** Título editable desde el panel; una línea por renglón. */
-  heroTitle: string;
-}
-
-export function CarruselSection({ heroTitle }: CarruselSectionProps) {
-  const titleLines = heroTitle
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
+export function CarruselSection() {
   const [slides, setSlides] = useState<CarouselImage[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -110,64 +100,29 @@ export function CarruselSection({ heroTitle }: CarruselSectionProps) {
             {slides.map((slide, index) => (
               <SwiperSlide key={`${slide.id}-${index}`}>
                 <div className="relative h-full w-full overflow-hidden bg-black">
-                  {/* IMAGEN - 2/3 DERECHA */}
-                  <div className="absolute inset-y-0 right-0 w-full md:w-[68%]">
+                  {/* IMAGEN */}
+                  <div className="absolute inset-0">
                     <Image
                       src={slide.image_url}
                       alt={`Gran Calidad Slide ${index + 1}`}
                       fill
                       priority={index === 0}
-                      sizes="(max-width: 768px) 100vw, 68vw"
-                      className="object-cover animate-fade-in md:object-contain md:object-right"
+                      sizes="100vw"
+                      className="object-cover animate-fade-in"
                     />
                   </div>
 
-                  {/* DEGRADADO NEGRO PRINCIPAL
-                      En móvil el texto va sobre la imagen, así que el velo sube
-                      desde abajo; en escritorio despeja la columna izquierda. */}
-                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/80 to-black/30 md:bg-gradient-to-r md:from-black md:via-black/90 md:via-35% md:to-transparent" />
+                  {/* Velo inferior para que el botón Login sea legible */}
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                  {/* DEGRADADO INFERIOR */}
-                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-                  {/* CONTENIDO - 1/3 IZQUIERDA */}
-                  <div className="absolute inset-y-0 left-0 z-20 flex w-full flex-col justify-end px-6 pb-20 md:w-[42%] md:justify-center md:px-16 md:pb-0">
-                    <div className="mb-5 inline-flex w-fit items-center gap-2.5 rounded-full border border-white/15 bg-black/50 px-4 py-1.5 backdrop-blur-md">
-                      <span className="h-2 w-2 rounded-full bg-[#FFD21F] shadow-[0_0_10px_#FFD21F]" />
-
-                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#FFD21F]">
-                        Innovación Publicitaria
-                      </span>
-                    </div>
-
-                    <h1 className="mb-4 text-3xl font-extrabold uppercase leading-[1.05] tracking-tight text-white md:text-5xl">
-                      {titleLines.map((line, lineIndex) => (
-                        <span
-                          key={`${line}-${lineIndex}`}
-                          className={
-                            lineIndex === titleLines.length - 1
-                              ? "block bg-gradient-to-r from-[#FFD21F] via-[#FF7A00] to-[#E50914] bg-clip-text text-transparent"
-                              : "block"
-                          }
-                        >
-                          {line}
-                        </span>
-                      ))}
-                    </h1>
-
-                    <p className="mb-7 max-w-xl text-sm font-light leading-relaxed text-white/70 md:text-base">
-                      Especialistas en impresión de gran formato y avisos
-                      corporativos de máxima calidad visual.
-                    </p>
-
-                    <div className="flex items-center gap-4">
-                      <Link
-                        href="/admin/login"
-                        className="rounded-xl bg-gradient-to-r from-[#FFD21F] via-[#FF7A00] to-[#E50914] px-7 py-3 text-xs font-bold uppercase tracking-wider text-black shadow-lg transition-all duration-300 hover:scale-105"
-                      >
-                        Login
-                      </Link>
-                    </div>
+                  {/* ÚNICO ELEMENTO SOBRE LA IMAGEN */}
+                  <div className="absolute bottom-6 left-6 z-20 md:bottom-8 md:left-8">
+                    <Link
+                      href="/admin/login"
+                      className="rounded-xl bg-gradient-to-r from-[#FFD21F] via-[#FF7A00] to-[#E50914] px-7 py-3 text-xs font-bold uppercase tracking-wider text-black shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                      Login
+                    </Link>
                   </div>
                 </div>
               </SwiperSlide>

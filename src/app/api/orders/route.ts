@@ -7,6 +7,11 @@ import {
 } from "@/src/modules/order/services/orders.service";
 import type { DigitalProvider } from "@/src/modules/finance/repositories/finance.repositories";
 import { NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+
+const DESIGN_MAX_SIZE = 5 * 1024 * 1024; // 5 MB, mismo límite que /api/upload
 
 export async function POST(request: Request) {
   try {
@@ -113,6 +118,45 @@ export async function POST(request: Request) {
           status: 400,
         },
       );
+    }
+
+    // ----------------------------------------------------------
+    // ARCHIVOS DE DISEÑO POR ÍTEM (designFile_0, designFile_1, ...)
+    // Antes se enviaban desde el cliente pero la ruta no los procesaba:
+    // quedaban huérfanos y order_items.design_file siempre era NULL.
+    // ----------------------------------------------------------
+
+    for (let index = 0; index < items.length; index++) {
+      const file = formData.get(`designFile_${index}`);
+
+      if (!file || !(file instanceof File) || file.size === 0) {
+        continue;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        return NextResponse.json(
+          { message: "El archivo de diseño debe ser una imagen." },
+          { status: 400 },
+        );
+      }
+
+      if (file.size > DESIGN_MAX_SIZE) {
+        return NextResponse.json(
+          { message: "La imagen de diseño supera los 5 MB." },
+          { status: 400 },
+        );
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+
+      await mkdir(uploadsDir, { recursive: true });
+
+      const fileName = `${crypto.randomUUID()}${path.extname(file.name)}`;
+
+      await writeFile(path.join(uploadsDir, fileName), buffer);
+
+      items[index].designFile = `/uploads/${fileName}`;
     }
 
     // ----------------------------------------------------------

@@ -216,6 +216,10 @@ export async function getOrderDetailsById(id: number) {
         o.created_at,
         o.updated_at,
 
+        o.customer_type,
+        o.customer_name,
+        o.customer_phone,
+
         oi.id AS item_id,
         oi.category_id,
         oi.service_id,
@@ -228,7 +232,9 @@ export async function getOrderDetailsById(id: number) {
         oi.design_file AS item_design_file,
         oi.observations AS item_observations,
 
-        s.name AS service_name
+        s.name AS service_name,
+        s.image AS service_image,
+        cat.name AS category_name
 
       FROM orders o
 
@@ -240,6 +246,9 @@ export async function getOrderDetailsById(id: number) {
 
       LEFT JOIN services s
         ON s.id = oi.service_id
+
+      LEFT JOIN categories cat
+        ON cat.id = oi.category_id
 
       WHERE o.id = ?
 
